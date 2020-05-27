@@ -101,7 +101,8 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(x, y, z)
 
-    model = produceModel(chopped, CURRENT, (-5, -2.5, -7.5), 2)
+    print("Generating model...")
+    model = produceModel(chopped, CURRENT, (-5, -2.5, -7.5), 1)
 
     with open("model.md", "wb") as f:
         pickle.dump(model, f)
