@@ -93,13 +93,6 @@ def produceModel(coil, current, startpoint, steplength):
     modelY = calculateField(coil, current, X, Y, Z, 1)
     modelZ = calculateField(coil, current, X, Y, Z, 2)
 
-    '''for x in range(0, BOX_SIZE[0] + steplength, steplength):
-        for y in range(0, BOX_SIZE[1] + steplength, steplength):
-            for z in range(0, BOX_SIZE[2] + steplength, steplength):
-                # print("Point {}".format((x,y,z)))
-                model[(x+startpoint[0],y+startpoint[1],z+startpoint[2])] = calculateField(coil, current, (x+startpoint[0],y+startpoint[1],z+startpoint[2]))
-    ''' # legacy code
-
     return (modelX, modelY, modelZ)
 
 if __name__ == "__main__":
