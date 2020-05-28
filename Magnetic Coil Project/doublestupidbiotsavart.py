@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pickle
+import time
 
 
 # store shape as a series of points
@@ -38,18 +39,19 @@ def sliceCoil(coil, steplength):
 
         for j in range(stepnumber):
             newcol = (start + diff * j/stepnumber)
+            # change j to a vector? --> start + diff * j directly without for loop
             newcoil = np.column_stack((newcoil, newcol))
 
     return newcoil[:,1:] # return non-dummy columns
 
-def calculateField(coil, current, position):
+def calculateField(coil, current, x, y, z, component):
     '''
-    Calculates magnetic field vector as a result of some position vector tuple (x, y, z)
+    Calculates magnetic field vector as a result of some position vector in numpy
     '''
 
     FACTOR = 10**(-7) # equals mu_0 / 4pi
 
-    B = np.zeros(3)
+    B = 0
 
     for i in range(coil.shape[1]-1):
         start = coil[:,i]
@@ -60,10 +62,12 @@ def calculateField(coil, current, position):
         midstep = (start + end)/2 
         # this is the effective position of our element (r' in the paper)
 
-        db = current * np.cross(dl, (position - midstep)) * FACTOR / (np.linalg.norm(position - midstep) ** 3) 
+        positionTerm = (x-midstep[0], y - midstep[1], z -midstep[2]) # (r - r')
+
+        db = current * np.cross(dl, positionTerm) * FACTOR / (np.linalg.norm(positionTerm) ** 3) 
         # Biot-Savart Law
 
-        B += db
+        B += db[component]
     
     return B
 
@@ -77,21 +81,31 @@ def produceModel(coil, current, startpoint, steplength):
     Steplength: Spatial resolution (in cm)
     '''
 
-    model = {}
+    BOX_SIZE = (5, 2, 2) # dimensions of box
 
-    BOX_SIZE = (30, 15, 15) # dimensions of box
+    x = np.arange(0, BOX_SIZE[0], steplength)
+    y = np.arange(0, BOX_SIZE[1], steplength)
+    z = np.arange(0, BOX_SIZE[2], steplength)
 
-    for x in range(0, BOX_SIZE[0] + steplength, steplength):
+    X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+
+    modelX = calculateField(coil, current, X, Y, Z, 0)
+    modelY = calculateField(coil, current, X, Y, Z, 1)
+    modelZ = calculateField(coil, current, X, Y, Z, 2)
+
+    '''for x in range(0, BOX_SIZE[0] + steplength, steplength):
         for y in range(0, BOX_SIZE[1] + steplength, steplength):
             for z in range(0, BOX_SIZE[2] + steplength, steplength):
                 # print("Point {}".format((x,y,z)))
                 model[(x+startpoint[0],y+startpoint[1],z+startpoint[2])] = calculateField(coil, current, (x+startpoint[0],y+startpoint[1],z+startpoint[2]))
+    ''' # legacy code
 
-    return model
+    return (modelX, modelY, modelZ)
 
 if __name__ == "__main__":
     chopped = sliceCoil(COIL, 1)
-    print("Slices generated.")
+    print("Slices generated in {}s".format(time.perf_counter()))
+    t_start = time.perf_counter()
 
     x = chopped[0,:]
     y = chopped[1,:]
@@ -104,11 +118,13 @@ if __name__ == "__main__":
     print("Generating model...")
     model = produceModel(chopped, CURRENT, (-5, -2.5, -7.5), 1)
 
-    with open("model.md", "wb") as f:
-        pickle.dump(model, f)
-        print("Model saved.")
+    print("Model made in {}s".format(time.perf_counter()-t_start))
 
-    boxpoints = np.array(list(model.keys()))
+    '''with open("model.md", "wb") as f:
+        pickle.dump(model, f)
+        print("Model saved.")'''
+
+    '''boxpoints = np.array(list(model.keys()))
 
     x = boxpoints[:,0]
     y = boxpoints[:,1]
@@ -120,7 +136,13 @@ if __name__ == "__main__":
     ax.set_ylabel('y (cm)')
     ax.set_zlabel('z (cm)')
 
-    plt.show()
+    plt.show()'''
 
 
 
+'''
+Meshgrid:
+Store 3 meshgrids, x, y, z --> uniform spacing
+
+<will need to do a smart spatial conversion to actual box conversion>
+'''

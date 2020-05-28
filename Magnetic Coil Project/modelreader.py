@@ -7,4 +7,4 @@ with open("model.md", "rb") as f:
     with open("output.txt", "w") as f2:
 
         for v in model:
-            f2.write("Position: {}\nField Vector: {}\n\n".format(v, model[v]))
+            f2.write("Position: {} cm\nField Vector: {} Gs\n\n".format(v, model[v]))
