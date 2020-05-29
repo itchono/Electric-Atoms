@@ -79,7 +79,7 @@ def produceModel(coil, current, startpoint, steplength):
 
     model = {}
 
-    BOX_SIZE = (5, 2, 2) # dimensions of box
+    BOX_SIZE = (30, 15, 15) # dimensions of box
 
     for x in range(0, BOX_SIZE[0] + steplength, steplength):
         for y in range(0, BOX_SIZE[1] + steplength, steplength):
