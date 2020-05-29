@@ -17,6 +17,4 @@ def speed_test():
         F = 1/R**3
     print(R.shape)
     print(F.shape)
-
-
-speed_test()
+cProfile.run("speed_test()")

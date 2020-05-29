@@ -1,33 +1,36 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import pickle
 import time
 from numba import njit
 
 import cProfile
 
+'''
+BIOT-SAVART Calculator
 
-# store shape as a series of points
+Given: Coil as a series of points in np array, Rectangular Search Box, Precision, Current into Coil
 
-# coil points stored as columns of 3 x n matrix, in cm
-# current stored in amps
-
-# assume infinitely thin conductor
+Mingde Yin
+May 28, 2020
+'''
 
 '''
 CFG
 '''
 COIL = np.array([[0,0,0], [10, 0, 0], [10, 10, 0], [20, 10, 0]]).T
-CURRENT = 1
-BOX_SIZE = (30, 15, 16) # dimensions of box
+# cartesian points in cm
 
+CURRENT = 1 # Ampere
+BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
+BOX_OFFSET = (-7.5, -2.5, -2.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
+
+COIL_RESOLUTION = 1 # cm
+VOLUME_RESOLUTION = 1 # cm
 
 
 def sliceCoil(coil, steplength):
     '''
-    Slices a coil into smaller steplength-sized pieces
-    Takes on the order of 1-3 ms currently for the simple coil
+    Slices a coil into smaller steplength-sized pieces based on the coil resolution
     '''
     
     def getEquidistantPoints(p1, p2, parts):
@@ -60,42 +63,11 @@ def sliceCoil(coil, steplength):
 
     return newcoil[1:,:].T # return non-dummy columns
 
-def calculateField(coil, current, position):
+
+def calculateField(coil, current, x, y, z):
     '''
-    Calculates magnetic field vector as a result of some np array [x, y, z]
-    Accelerated using numpy
-    Around 3.7x fewer function calls compared to OLD method
-
-    Used for COMPARISON
-    '''
-    FACTOR = 10**(-7) 
-    # equals mu_0 / 4pi
-
-    segment_starts = coil[:,:-1]
-    segment_ends = coil[:,1:]
-    # determine start and end of each segment
-
-    middle_of_each_step = (segment_starts + segment_ends)/2
-    dLs = segment_ends-segment_starts
-
-    relative_positions = (position[:,None]-middle_of_each_step)
-    # equal to the r - r' vector
-
-    mag_r = np.apply_along_axis(np.linalg.norm, 0, relative_positions)
-    # get magnitudes of each segment
-
-    dBs = current * np.cross(dLs.T, relative_positions.T) * FACTOR / (mag_r[:,None] ** 3)
-    # determine each individual step of the integration using B-S formula
-
-    # NOTE: Needs weird transpose stuff in order to broadbast correctly to dimensions
-    
-    return dBs.sum(axis=0)
-    # add up every dB
-
-def calculateFieldMeshgridCompatibility(coil, current, x, y, z):
-    '''
-    Calculates magnetic field vector as a result of some position vector tuple (x, y, z)
-    attempting to use numba for performance improvement
+    Calculates magnetic field vector as a result of some position x, y, z
+    [In the same coordinate system as the coil]
     '''
     position = np.array([x,y,z])
 
@@ -111,7 +83,6 @@ def calculateFieldMeshgridCompatibility(coil, current, x, y, z):
         dl = end - start
         dl = dl.T
         midstep = (start + end)/2 
-        midstep = midstep.T
         # this is the effective position of our element (r' in the paper)
 
         # WEIRD REALIGNMENTS FOR NUMBA TO WORK PLEASE
@@ -145,41 +116,44 @@ def produceModel(coil, current, startpoint, steplength):
 
     X,Y,Z = np.meshgrid(x, y, z, indexing='ij')
 
-    return calculateFieldMeshgridCompatibility(coil, current, X,Y,Z)
+    return calculateField(coil, current, X,Y,Z)
 
 def profiler():
-    chopped = sliceCoil(COIL, 1)
-    model = produceModel(chopped, CURRENT, (-7.5, -2.5, -2.5), 1)
-    # Producemodel is NOT the bottleneck, not much benefit compared to v3
+    chopped = sliceCoil(COIL, COIL_RESOLUTION)  
+    model = produceModel(chopped, CURRENT, BOX_OFFSET, VOLUME_RESOLUTION)
+    print(model.shape)
+    # 0.045 seconds approx.
+    # 3254 function calls (3109 primitive calls) in 0.043 seconds
+    # almost 1000x faster, 6000 x fewer function calls
+
+def profiler():
+
+    chopped = sliceCoil(COIL, COIL_RESOLUTION)  
+    model = produceModel(chopped, CURRENT, BOX_OFFSET, VOLUME_RESOLUTION)
     print(model.shape)
 
-def test():
-    '''
-    Numba Speed Test
-    Record to beat: 9 seconds [numpy]
-    '''
+def speedtest():
     chopped = sliceCoil(COIL, 1)
 
-    for i in range(10):
+    times = []
+
+    for i in range(100):
         t_start = time.perf_counter()
 
-        model = produceModel(chopped, CURRENT, (-7.5, -2.5, -2.5), 1)
-        # Producemodel is NOT the bottleneck, not much benefit compared to v3
-
-        print(model.shape)
+        model = produceModel(chopped, CURRENT, (-7.5, -2.5, i), 1)
 
         t_end = time.perf_counter()
 
         print("T: {}".format(t_end-t_start))
-        # SUPER STUPID FAST --> < 0.055 seconds?????
-        print(calculateField(chopped, CURRENT, np.array((-7.5, -1.5, -0.5))))
-        print(model[2, 1, 0,:])
-        # compare with refernece (coords [z, y, x,:])
+
+        times.append(t_end-t_start)
+
+    print("Average: {}".format(sum(times)/len(times)))
 
 if __name__ == "__main__":
     cProfile.run("profiler()")
 
-    #test()
+    speedtest()
     
     
 
