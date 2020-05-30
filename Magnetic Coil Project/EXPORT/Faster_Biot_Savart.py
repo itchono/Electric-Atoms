@@ -78,7 +78,7 @@ def sliceCoil(coil, steplength):
     stepnumbers = (segment_lengths/steplength).astype(int)
     # determine how many steps we must chop each segment into
 
-    for i in range(segments.shape[0]):
+    for i in range(segments.shape[1]):
         # still slow; TODO how to turn into numpy?
         newrows = getEquidistantPoints(segment_starts[:,i], segment_ends[:,i], stepnumbers[i])
         # set of new interpolated points to feed in
@@ -149,6 +149,8 @@ def getFieldVector(model, position):
     relativePosition = ((np.array(position) - np.array(BOX_OFFSET)) / VOLUME_RESOLUTION).astype(int)
     # adjust to the meshgrid's system
     # print("Access indices: {}".format(relativePosition)) # --> if you need to debug the mesh grid
+
+    if (relativePosition < 0).any(): return ("ERROR: Out of bounds! (negative indices)")
 
     try: return model[relativePosition[2], relativePosition[1], relativePosition[0], :]
     except: return ("ERROR: Out of bounds!")
