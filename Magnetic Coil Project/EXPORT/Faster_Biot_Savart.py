@@ -165,14 +165,14 @@ if __name__ == "__main__":
     t_end = time.perf_counter()
 
     print("Model made in {:.4f}s, of shape {}".format(t_end-t_start, model.shape))
-
     print("Starting position: {} cm with stepsize of {} cm".format(BOX_OFFSET, VOLUME_RESOLUTION))
-
-    print("Please input the position at which you want to see the B vector...")
     
-    position = (eval(input("x?\n")), eval(input("y?\n")), eval(input("z?\n")))
-    
-    print(getFieldVector(model, position), "Gs at {} cm".format(position))
+    while 1:
+        print("Please input the position at which you want to see the B vector...")
+        
+        position = (eval(input("x?\n")), eval(input("y?\n")), eval(input("z?\n")))
+        
+        print(getFieldVector(model, position), "Gs at {} cm".format(position))
 
 
 '''
