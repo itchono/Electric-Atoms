@@ -24,7 +24,7 @@ May 29, 2020
 CONFIGURATION OF VARIABLES
 '''
 
-BOX_SIZE = (30, 15, 16) # dimensions of box in cm (x, y, z)
+BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
 BOX_OFFSET = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
 
 COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
@@ -96,9 +96,7 @@ def calculateField(coil, x, y, z):
     Output B-field is a 3-D vector in units of G
     '''
 
-    FACTOR = 10**(-7) # equals mu_0 / 4pi in SI units: T m/A
-    #AV: note mu_0/4pi = 1e-7 in SI units, which means the current needs to be in A, and lengths in m (not cm !) to get an output in T
-    #AV: I suggest changing FACTOR to 0.1, which will return the B-field in G when the current is in A and all lengths are in cm.
+    FACTOR = 0.1 # equals mu_0 / 4pi for when all lengths are in cm, used to return B field in G.
 
     B = 0
 
@@ -119,16 +117,14 @@ def calculateField(coil, x, y, z):
 
         db = start[3] * np.cross(dl[:3], difference) * FACTOR / np.array((mag ** 3, mag ** 3, mag ** 3)).T
         # Biot-Savart Law
-        # Needs the whole transpose thing because "operands could not be broadcast together with shapes (31,16,17,3) (17,16,31) "
-        # quirk with meshgrids
         # current equals start[3]
 
+        # Needs the whole transpose thing because "operands could not be broadcast together with shapes (31,16,17,3) (17,16,31)" otherwise
+        # quirk with meshgrids
         B += db
     
     return B # return SUM of all components
     # evaluated using produceTargetVolume
-    #AV: Confirm that B is a vector (of meshgrids)
-    
 
 def produceTargetVolume(coil, startpoint, steplength):
     '''
@@ -166,6 +162,36 @@ def getFieldVector(targetVolume, position):
     # basic error checking to see if you actually got a correct input/output
 
 
+'''
+EXTERNAL USAGE
+
+Import all functions in this file
+
+- The coil will load in automatically from the file "coil.txt"
+- You must then slice the coil
+- You must then produce a Target Volume using the coil
+- Then, you can either use getFieldVector(), or index on your own
+'''
+
+def writeField(filename):
+    '''
+    takes a coil specified in coil.txt and write out the B-field in the target volume into 3 separate text files (Bx.txt, By.txt, Bz.txt). 
+    '''
+    coil = parseCoil(filename)
+
+    chopped = sliceCoil(coil, COIL_RESOLUTION)
+
+    targetVolume = produceTargetVolume(chopped, (-5, -2.5, -7.5), VOLUME_RESOLUTION)
+
+    np.savetxt("Bx.txt", targetVolume[:,:,:,0])
+    np.savetxt("By.txt", targetVolume[:,:,:,1])
+    np.savetxt("Bz.txt", targetVolume[:,:,:,2])
+
+def readField(BxName, ByName, BzName):
+    '''
+    Takes stores Bx, By, Bz, and reloads into memory
+    '''
+
 if __name__ == "__main__":
     print("Generating Points...")
     t_start = time.perf_counter()
@@ -186,19 +212,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("DONE")
 
-'''
-EXTERNAL USAGE
-
-Import all functions in this file
-
-- The coil will load in automatically from the file "coil.txt"
-- You must then slice the coil
-- You must then produce a Target Volume using the coil
-- Then, you can either use getFieldVector(), or index on your own
-'''
-    
-#AV: after making the above edits, please write a sample program that takes a coil specified in coil.txt and write out the B-field in the target volume into 3 separate text files (Bx.txt, By.txt, Bz.txt). 
-
-    
+    writeField("coil.txt")    
 
 
