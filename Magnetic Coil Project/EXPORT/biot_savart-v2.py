@@ -23,21 +23,15 @@ def parseCoil(filename):
     with open(filename, "r") as f:
         return np.array([[eval(i) for i in line.split(",")] for line in f.read().splitlines()]).T
 
-COIL = parseCoil("coil.txt")
-# cartesian + current points in cm, Amperes
 '''
-FILE FORMAT
+FILE FORMAT for coil.txt
 CSV Stored in form:
 x1,y1,z1,I1
 x2,y2,z2,I2
 .
 .
-.
 xn,yn,zn,In
-
-let's call this space [R3+I]
 '''
-
 # TODO: Option to do points and current as separate files? 
 # Ryan or Amar let me know if you would like this as an option!
 
@@ -84,7 +78,6 @@ def calculateField(coil, x, y, z):
     
     Output B-field is a 3-D vector in units of G
     '''
-
     FACTOR = 0.1 # equals mu_0 / 4pi for when all lengths are in cm, used to return B field in G.
 
     B = 0
@@ -149,7 +142,6 @@ def getFieldVector(targetVolume, position, startpoint, volumeresolution):
     try: return targetVolume[relativePosition[0], relativePosition[1], relativePosition[2], :]
     except: return ("ERROR: Out of bounds!")
     # basic error checking to see if you actually got a correct input/output
-
 
 '''
 EXTERNAL USAGE
@@ -229,6 +221,3 @@ if __name__ == "__main__":
             print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION), "Gs at {} cm".format(position))
     except KeyboardInterrupt:
         print("DONE")
-
-
-
