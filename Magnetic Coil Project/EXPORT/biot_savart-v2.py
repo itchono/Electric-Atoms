@@ -12,20 +12,9 @@ You will need to provide:
 - A rectangular box of a certain size, with a certain offset position
 - Resolution at which you want to conduct your measurements
 
-Please see configuration section.
-
 Mingde Yin
 May 31, 2020
 '''
-
-'''
-CONFIGURATION OF VARIABLES
-'''
-BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
-START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
-
-COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
-VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
 
 def parseCoil(filename):
     '''
@@ -117,7 +106,7 @@ def calculateField(coil, x, y, z):
 
         db = start[3] * np.cross(dl[:3], difference) * FACTOR / np.array((mag ** 3, mag ** 3, mag ** 3)).T
         # Biot-Savart Law
-        # current equals start[3]
+        # current in this case is represented by start[3]
 
         # Needs the whole transpose thing because "operands could not be broadcast together with shapes (31,16,17,3) (17,16,31)" otherwise
         # quirk with meshgrids
@@ -213,8 +202,15 @@ def readTargetVolume(filename):
 
 if __name__ == "__main__":
     '''
-    A little demo program
+    A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
     '''
+    BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
+    START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
+
+    COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
+    VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
+
+
     filename = input("Name of file to save target volume? (ex. TargetVolume1.npy)\n")
 
     writeTargetVolume(filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
