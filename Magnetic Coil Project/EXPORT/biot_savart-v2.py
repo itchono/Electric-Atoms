@@ -1,6 +1,4 @@
 import numpy as np
-import time
-
 '''
 BIOT-SAVART Calculator v2
 Accelerated using numpy meshgrids
@@ -17,19 +15,17 @@ You will need to provide:
 Please see configuration section.
 
 Mingde Yin
-May 29, 2020
+May 31, 2020
 '''
 
 '''
 CONFIGURATION OF VARIABLES
 '''
-
 BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
-BOX_OFFSET = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
+START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
 
 COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
 VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
-
 
 def parseCoil(filename):
     '''
@@ -49,9 +45,12 @@ x2,y2,z2,I2
 .
 .
 xn,yn,zn,In
+
+let's call this space [R3+I]
 '''
 
-# TODO: Option to do points and current as separate files?
+# TODO: Option to do points and current as separate files? 
+# Ryan or Amar let me know if you would like this as an option!
 
 def sliceCoil(coil, steplength):
     '''
@@ -65,7 +64,7 @@ def sliceCoil(coil, steplength):
                 np.linspace(p1[1], p2[1], parts+1),
                 np.linspace(p1[2], p2[2], parts+1), p1[3] * np.ones((parts+1))))
 
-    newcoil = np.zeros((1, 4)) # fill with dummy column
+    newcoil = np.zeros((1, 4)) # fill with dummy first column
 
     segment_starts = coil[:,:-1]
     segment_ends = coil[:,1:]
@@ -92,6 +91,7 @@ def calculateField(coil, x, y, z):
     [In the same coordinate system as the coil]
 
     Coil: Input Coil Positions, already sub-divided into small pieces using sliceCoil
+    x, y, z: position in cm
     
     Output B-field is a 3-D vector in units of G
     '''
@@ -123,37 +123,37 @@ def calculateField(coil, x, y, z):
         # quirk with meshgrids
         B += db
     
-    return B # return SUM of all components
-    # evaluated using produceTargetVolume
+    return B # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produceTargetVolume
 
-def produceTargetVolume(coil, startpoint, steplength):
+def produceTargetVolume(coil, boxsize, startpoint, steplength):
     '''
     Generates a set of field vector values for each tuple (x, y, z) in the box.
 
     Coil: Input Coil Positions in format specified above, already sub-divided into small pieces
-    Startpoint: (x, y, z) = (0, 0, 0) position of the box (30 x 15 x 15) cm
+    BoxSize: (x, y, z) dimensions of the box in cm
+    Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box
     Steplength: Spatial resolution (in cm)
     '''
-    x = np.arange(startpoint[0], startpoint[0] + BOX_SIZE[0] + steplength, steplength)
-    y = np.arange(startpoint[1], startpoint[1] + BOX_SIZE[1] + steplength, steplength)
-    z = np.arange(startpoint[2], startpoint[2] + BOX_SIZE[2] + steplength, steplength)
+    x = np.arange(startpoint[0], startpoint[0] + boxsize[0] + steplength, steplength)
+    y = np.arange(startpoint[1], startpoint[1] + boxsize[1] + steplength, steplength)
+    z = np.arange(startpoint[2], startpoint[2] + boxsize[2] + steplength, steplength)
     # Generate points at regular spacing, incl. end points
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
-    # NOTE: Requires axes to be flipped in order for meshgrid to work as intended
+    # NOTE: Requires axes to be flipped in order for meshgrid to have the correct dimensional order
     # it's just a weird thing with numpy
 
     return calculateField(coil, X,Y,Z)
 
-def getFieldVector(targetVolume, position):
+def getFieldVector(targetVolume, position, startpoint, volumeresolution):
     '''
     Returns the B vector [Bx, By, Bz] components in a generated Target Volume at a given position tuple (x, y, z) in a coordinate system
-    '''
 
-    relativePosition = ((np.array(position) - np.array(BOX_OFFSET)) / VOLUME_RESOLUTION).astype(int)
+    Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box
+    VolumeResolution: Division of volumetric meshgrid (generate a point every VolumeResolution cm)
+    '''
+    relativePosition = ((np.array(position) - np.array(startpoint)) / volumeresolution).astype(int)
     # adjust to the meshgrid's system
-    
-    # print("Access indices: {}".format(relativePosition)) # --> if you need to debug the mesh grid
 
     if (relativePosition < 0).any(): return ("ERROR: Out of bounds! (negative indices)")
 
@@ -171,47 +171,68 @@ Import all functions in this file
 - You must then slice the coil
 - You must then produce a Target Volume using the coil
 - Then, you can either use getFieldVector(), or index on your own
+
+- If you are indexing on your own, remember to account for the offset (starting point), and spatial resolution
+- something like <relativePosition = ((np.array(position) - np.array(startpoint)) / volumeresolution).astype(int)>
 '''
 
-def writeField(filename):
+def writeTargetVolume(filename, boxsize, startpoint, coilresolution, volumeresolution):
     '''
-    takes a coil specified in coil.txt and write out the B-field in the target volume into 3 separate text files (Bx.txt, By.txt, Bz.txt). 
+    Takes a coil specified in [coil.txt], generates a target volume, and saves the generated target volume to file.
+
+    BoxSize: (x, y, z) dimensions of the box in cm
+    Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box AKA the offset
+    CoilResolution: How long each coil subsegment should be
+    VolumeResolution: Division of volumetric meshgrid (generate a point every VolumeResolution cm)
     '''
-    coil = parseCoil(filename)
+    coil = parseCoil("coil.txt") # TODO: You may want to make this take in a custom input
 
-    chopped = sliceCoil(coil, COIL_RESOLUTION)
+    chopped = sliceCoil(coil, coilresolution)
 
-    targetVolume = produceTargetVolume(chopped, (-5, -2.5, -7.5), VOLUME_RESOLUTION)
+    targetVolume = produceTargetVolume(chopped, boxsize, startpoint, volumeresolution)
 
-    np.savetxt("Bx.txt", targetVolume[:,:,:,0])
-    np.savetxt("By.txt", targetVolume[:,:,:,1])
-    np.savetxt("Bz.txt", targetVolume[:,:,:,2])
+    with open(filename, "wb") as f:
+        np.save(f, targetVolume)
 
-def readField(BxName, ByName, BzName):
+
+def readTargetVolume(filename):
     '''
-    Takes stores Bx, By, Bz, and reloads into memory
+    Takes the name of a saved target volume and loads the B vector meshgrid.
+
+    Returns None if not found.
     '''
+    targetVolume = None
+
+    try:
+        with open(filename, "rb") as f:
+            targetVolume = np.load(f)
+        return targetVolume
+    except:
+        pass
+
 
 if __name__ == "__main__":
-    print("Generating Points...")
-    t_start = time.perf_counter()
-    chopped = sliceCoil(COIL, COIL_RESOLUTION)
-    targetVolume = produceTargetVolume(chopped, BOX_OFFSET, VOLUME_RESOLUTION)
-    t_end = time.perf_counter()
+    '''
+    A little demo program
+    '''
+    filename = input("Name of file to save target volume? (ex. TargetVolume1.npy)\n")
 
-    print("Target Volume made in {:.4f}s, of shape {}".format(t_end-t_start, targetVolume.shape))
-    print("Starting position: {} cm with stepsize of {} cm".format(BOX_OFFSET, VOLUME_RESOLUTION))
-    
+    writeTargetVolume(filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
+    # writes example coil to file.
+
+    targetVolume = readTargetVolume(filename)
+
+    print("Target volume loaded with shape:",targetVolume.shape)
+
     try:
         while True:
             print("Please input the position at which you want to see the B vector...")
         
             position = (eval(input("x?\t")), eval(input("y?\t")), eval(input("z?\t")))
             
-            print(getFieldVector(targetVolume, position), "Gs at {} cm".format(position))
+            print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION), "Gs at {} cm".format(position))
     except KeyboardInterrupt:
         print("DONE")
 
-    writeField("coil.txt")    
 
 
