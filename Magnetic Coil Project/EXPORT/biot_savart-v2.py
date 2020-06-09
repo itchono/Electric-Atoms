@@ -191,7 +191,7 @@ def readTargetVolume(filename):
     except:
         pass
 
-
+import time
 if __name__ == "__main__":
     '''
     A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
@@ -199,16 +199,17 @@ if __name__ == "__main__":
     BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
     START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
 
-    COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
+    COIL_RESOLUTION = 0.01 # cm; affects runtime of calculation process linearly, and increases precision up to a point
     VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
 
 
     filename = input("Name of file to save target volume? (ex. TargetVolume1.npy)\n")
-
+    t = time.perf_counter()
     writeTargetVolume(filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
     # writes example coil to file.
-
+    t_end = time.perf_counter()
     targetVolume = readTargetVolume(filename)
+    print("loaded in {}s".format(t_end-t))
 
     print("Target volume loaded with shape:",targetVolume.shape)
 
@@ -218,6 +219,6 @@ if __name__ == "__main__":
         
             position = (eval(input("x?\t")), eval(input("y?\t")), eval(input("z?\t")))
             
-            print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION), "Gs at {} cm".format(position))
+            print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION)*1000, "mGs at {} cm".format(position))
     except KeyboardInterrupt:
         print("DONE")
