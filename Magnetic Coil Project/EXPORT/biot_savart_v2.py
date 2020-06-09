@@ -199,7 +199,7 @@ if __name__ == "__main__":
     BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
     START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
 
-    COIL_RESOLUTION = 0.01 # cm; affects runtime of calculation process linearly, and increases precision up to a point
+    COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
     VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
 
 
@@ -208,8 +208,10 @@ if __name__ == "__main__":
     writeTargetVolume(filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
     # writes example coil to file.
     t_end = time.perf_counter()
+    print("generated in {:.4f}s".format(t_end-t))
+
     targetVolume = readTargetVolume(filename)
-    print("loaded in {}s".format(t_end-t))
+    
 
     print("Target volume loaded with shape:",targetVolume.shape)
 

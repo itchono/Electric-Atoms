@@ -27,7 +27,7 @@ version history:
     v3.5: all B-field plots together
     v3.7: B-fields plotted together with 50 levels (now works on windows) and combined v3.3 and v3.5
     v3.8: Changed up all np.aranges to np.linspaces and changed up the plotting code to work with non-integer step sizes and non-integer levels
-    v4_dev1: Using Richardson Extrapolation for midpoint rule to improve accuracy, tweaked linspaces to correctly do step size
+    v4: Mingde Yin June 9, 2020 Using Richardson Extrapolation for midpoint rule to improve accuracy, tweaked linspaces to correctly do step size
 
 wishlist:
     1. improve plot_coil with different colors for different values of current?
@@ -97,12 +97,11 @@ def calculateField(coil, x, y, z):
     
     Output B-field is a 3-D vector in units of G
     '''
-    B = 0
     FACTOR = 0.1 # = mu_0 / 4pi when lengths are in cm, and B-field is in G
 
     def BSintegrate(start, end):
         '''
-        produces tiny segment of magnetic field vector (dB) using the midpoint approximation over some interval
+        Produces tiny segment of magnetic field vector (dB) using the midpoint approximation over some interval
         '''
         dl = (end-start).T
         mid = (start+end)/2
@@ -111,8 +110,9 @@ def calculateField(coil, x, y, z):
 
         return start[3] * np.cross(dl[:3], position) / np.array((mag ** 3, mag ** 3, mag ** 3)).T
         # Biot-Savart Law
-        # current in this case is represented by start[3]
+        # current flowing in this segment is represented by start[3]
 
+    B = 0
 
     for i in range(0, coil.shape[1]-2, 2):
         # midpoint integration with 1 layer of Richardson Extrapolation
@@ -122,13 +122,10 @@ def calculateField(coil, x, y, z):
         end = coil[:,i+2]
         # partition each inverval into 2 subintervals
 
-        Q1 = (start+mid)/2
-        Q3 = (mid+end)/2
+        fullpart = BSintegrate(start, end) # stage 1 richardson
+        halfpart = BSintegrate(start, mid) + BSintegrate(mid, end) # stage 2 richardson
+        # precision increasing using richardson is comparable to 
 
-        fullpart = BSintegrate(start, end)
-        halfpart = BSintegrate(start, mid) + BSintegrate(mid, end) # stage 1 richardson
-        quarterpart = BSintegrate(start, Q1) + BSintegrate(Q1, mid) + BSintegrate(mid, Q3) + BSintegrate(Q3, end) # stage 2 richardson
-        halfpart = 4/3 * quarterpart - 1/3 * halfpart
         B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule
     
     return B * FACTOR # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produceTargetVolume
@@ -145,7 +142,6 @@ def produceTargetVolume(coil, boxsize, startpoint, steplength):
     x = np.linspace(startpoint[0], boxsize[0] + startpoint[0], int(boxsize[0]/steplength) + 1)
     y = np.linspace(startpoint[1], boxsize[1] + startpoint[1], int(boxsize[1]/steplength) + 1)
     z = np.linspace(startpoint[2], boxsize[2] + startpoint[2], int(boxsize[2]/steplength) + 1)
-
     # Generate points at regular spacing, incl. end points
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
@@ -239,7 +235,6 @@ def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level
         x_array,y_array = X,Z
     else:
         converted_level = np.where(Z >= level)
-        print(converted_level[0][0])
         B_sliced = [Bfields[:,:,converted_level[0][0],i].T for i in range(3)]
         x_label,y_label = "x","y"
         x_array,y_array = X,Y
@@ -319,37 +314,5 @@ def test():
     # plot the coil geometry
     plot_coil(input_filename)
 
-import time
-
 if __name__ == "__main__":
-    '''
-    A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
-    '''
-    BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
-    START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
-
-    COIL_RESOLUTION = 0.1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
-    VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
-
-
-    filename = input("Name of file to save target volume? (ex. TargetVolume1.npy)\n")
-    t = time.perf_counter()
-    writeTargetVolume("coil.txt", filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
-    # writes example coil to file.
-    t_end = time.perf_counter()
-    targetVolume = readTargetVolume(filename)
-
-    print("loaded in {}s".format(t_end-t))
-
-    print("Target volume loaded with shape:",targetVolume.shape)
-
-    try:
-        while True:
-            print("Please input the position at which you want to see the B vector...")
-        
-            position = (eval(input("x?\t")), eval(input("y?\t")), eval(input("z?\t")))
-            
-            print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION)*1000, "mGs at {} cm".format(position))
-    except KeyboardInterrupt:
-        print("DONE")
-        test()
+    test()
