@@ -1,4 +1,5 @@
-import biot_savart_v4_dev as b4
+import biot_savart_v4_dev as b4d
+import biot_savart_v4 as b4
 import biot_savart_v2 as b2
 import time
 import numpy as np
@@ -9,6 +10,12 @@ from pstats import SortKey
 if __name__ == "__main__":
     '''
     A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
+    
+    
+    Results:
+    Around 1.4x slower
+    for around 5 to 30x precision boost
+    
     '''
     reference001 = b4.readTargetVolume("midpoint001")
     reference01 = b4.readTargetVolume("midpoint01")
@@ -55,7 +62,21 @@ if __name__ == "__main__":
     print(s.getvalue())
 
 
-    """pr = cProfile.Profile()
+    pr = cProfile.Profile()
+    pr.enable()
+
+    b4d.writeTargetVolume("coil.txt","yes", 
+                    (30, 15, 15),(-5, -2.5, -7.5),1,1)
+
+
+    pr.disable()
+    s = io.StringIO()
+    sortby = SortKey.CUMULATIVE
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())
+
+    pr = cProfile.Profile()
     pr.enable()
 
     b2.writeTargetVolume("yes", 
@@ -67,5 +88,5 @@ if __name__ == "__main__":
     sortby = SortKey.CUMULATIVE
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats()
-    print(s.getvalue())"""
+    print(s.getvalue())
     

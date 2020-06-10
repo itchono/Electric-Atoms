@@ -27,7 +27,8 @@ version history:
     v3.5: all B-field plots together
     v3.7: B-fields plotted together with 50 levels (now works on windows) and combined v3.3 and v3.5
     v3.8: Changed up all np.aranges to np.linspaces and changed up the plotting code to work with non-integer step sizes and non-integer levels
-    v4: Mingde Yin June 9, 2020 Using Richardson Extrapolation for midpoint rule to improve accuracy, tweaked linspaces to correctly do step size
+    v4: Mingde Yin June 9, 2020 Using Richardson Extrapolation for midpoint rule to improve accuracy (5 to 30x better at 1.4x speed penalty), tweaked linspaces to correctly do step size
+    v4.1: Minor change in function indexing to use more numpy, cleaning up for export
 
 wishlist:
     1. improve plot_coil with different colors for different values of current?
@@ -38,8 +39,7 @@ def parseCoil(filename):
     '''
     Parses 4 column CSV into x,y,z,I slices for coil
     '''
-    with open(filename, "r") as f:
-        return np.array([[eval(i) for i in line.split(",")] for line in f.read().splitlines()]).T
+    with open(filename, "r") as f: return np.array([[eval(i) for i in line.split(",")] for line in f.read().splitlines()]).T
 
 '''
 FILE FORMAT for coil.txt:
@@ -59,8 +59,7 @@ def sliceCoil(coil, steplength):
         '''
         Produces a series of linearly spaced points between two given points in R3+I (retains same current)
         '''
-        return np.column_stack((np.linspace(p1[0], p2[0], parts+1),
-                np.linspace(p1[1], p2[1], parts+1),
+        return np.column_stack((np.linspace(p1[0], p2[0], parts+1), np.linspace(p1[1], p2[1], parts+1),
                 np.linspace(p1[2], p2[2], parts+1), p1[3] * np.ones((parts+1))))
 
     newcoil = np.zeros((1, 4)) # fill with dummy first column
@@ -84,7 +83,7 @@ def sliceCoil(coil, steplength):
 
     ## Force the coil to have an even number of segments, for Richardson Extrapolation
     if newcoil.shape[0] %2 != 0: newcoil = np.vstack((newcoil, newcoil[-1,:]))
-
+    
     return newcoil[1:,:].T # return non-dummy columns
 
 def calculateField(coil, x, y, z):
@@ -102,6 +101,8 @@ def calculateField(coil, x, y, z):
     def BSintegrate(start, end):
         '''
         Produces tiny segment of magnetic field vector (dB) using the midpoint approximation over some interval
+
+        for future optimization: Get this to work with meshgrids
         '''
         dl = (end-start).T
         mid = (start+end)/2
@@ -115,15 +116,12 @@ def calculateField(coil, x, y, z):
     B = 0
 
     # midpoint integration with 1 layer of Richardson Extrapolation
-    starts = coil[:,:-1:2]
-    mids = coil[:,1::2]
-    ends = coil[:,2::2]
+    starts, mids, ends = coil[:,:-1:2], coil[:,1::2], coil[:,2::2]
 
     for start, mid, end in np.nditer([starts, mids, ends], flags=['external_loop'], order='F'):
         # use numpy fast indexing
         fullpart = BSintegrate(start, end) # stage 1 richardson
         halfpart = BSintegrate(start, mid) + BSintegrate(mid, end) # stage 2 richardson
-        # precision increasing using richardson is comparable to 
 
         B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule
     
