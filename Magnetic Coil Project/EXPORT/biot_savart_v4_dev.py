@@ -105,7 +105,7 @@ def calculateField(coil, x, y, z):
         '''
         dl = (end-start).T
         mid = (start+end)/2
-        position = np.array([x-mid[0], y-mid[1], z-mid[2]]).T
+        position = np.array((x-mid[0], y-mid[1], z-mid[2])).T
         mag = np.sqrt((x-mid[0])**2 + (y-mid[1])**2 + (z-mid[2])**2)
 
         return start[3] * np.cross(dl[:3], position) / np.array((mag ** 3, mag ** 3, mag ** 3)).T
@@ -127,6 +127,19 @@ def calculateField(coil, x, y, z):
         # precision increasing using richardson is comparable to 
 
         B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule
+
+    """# midpoint integration with 1 layer of Richardson Extrapolation
+    starts = coil[:,:-1:2]
+    mids = coil[:,1::2]
+    ends = coil[:,2::2]
+
+    for start, mid, end in np.nditer([starts, mids, ends], flags=['external_loop'], order='F'):
+
+        fullpart = BSintegrate(start, end) # stage 1 richardson
+        halfpart = BSintegrate(start, mid) + BSintegrate(mid, end) # stage 2 richardson
+        # precision increasing using richardson is comparable to 
+
+        B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule"""
     
     return B * FACTOR # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produceTargetVolume
 

@@ -5,6 +5,7 @@ import numpy as np
 import cProfile, pstats, io
 from pstats import SortKey
 
+
 if __name__ == "__main__":
     '''
     A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     print(s.getvalue())
 
 
-    pr = cProfile.Profile()
+    """pr = cProfile.Profile()
     pr.enable()
 
     b2.writeTargetVolume("yes", 
@@ -66,5 +67,5 @@ if __name__ == "__main__":
     sortby = SortKey.CUMULATIVE
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats()
-    print(s.getvalue())
+    print(s.getvalue())"""
     
