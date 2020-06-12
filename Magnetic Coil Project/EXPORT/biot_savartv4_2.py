@@ -110,8 +110,6 @@ def calculateField(coil, x, y, z):
         position = np.array((x-mid[0], y-mid[1], z-mid[2])).T
         mag = np.sqrt((x-mid[0])**2 + (y-mid[1])**2 + (z-mid[2])**2)
 
-        print(np.cross(dl[:3], position))
-
         return start[3] * np.cross(dl[:3], position) / np.array((mag ** 3, mag ** 3, mag ** 3)).T
 
         # Biot-Savart Law
@@ -131,7 +129,7 @@ def calculateField(coil, x, y, z):
     
     return B * FACTOR # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produceTargetVolume
 
-def produceTargetVolume(coil, boxsize, startpoint, steplength):
+def produceTargetVolume(coil, box_size, startpoint, vol_resolution):
     '''
     Generates a set of field vector values for each tuple (x, y, z) in the box.
 ​
@@ -140,9 +138,9 @@ def produceTargetVolume(coil, boxsize, startpoint, steplength):
     Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box
     Steplength: Spatial resolution (in cm)
     '''
-    x = np.linspace(startpoint[0],boxsize[0] + startpoint[0],(int)((boxsize[0] + abs(startpoint[0]))/steplength))
-    y = np.linspace(startpoint[1],boxsize[1] + startpoint[1],(int)((boxsize[1] + abs(startpoint[1]))/steplength))
-    z = np.linspace(startpoint[2],boxsize[2] + startpoint[2],(int)((boxsize[2] + abs(startpoint[2]))/steplength))
+    x = np.linspace(startpoint[0], box_size[0],int(box_size[0]/vol_resolution)+1)
+    y = np.linspace(startpoint[1], box_size[1],int(box_size[1]/vol_resolution)+1)
+    z = np.linspace(startpoint[2], box_size[2],int(box_size[2]/vol_resolution)+1)
     # Generate points at regular spacing, incl. end points
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
@@ -219,9 +217,9 @@ def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level
     # filled contour plot of Bx, By, and Bz on a chosen slice plane
 
     # M.Y: Changed linspace to generate the correct amount of points
-    X = np.linspace(startpoint[0], box_size[0] + startpoint[0],(int)((box_size[0] + abs(startpoint[0]))/vol_resolution))
-    Y = np.linspace(startpoint[1], box_size[1] + startpoint[1],(int)((box_size[1] + abs(startpoint[1]))/vol_resolution))
-    Z = np.linspace(startpoint[2], box_size[2] + startpoint[2],(int)((box_size[2] + abs(startpoint[2]))/vol_resolution))
+    X = np.linspace(startpoint[0], box_size[0],int(box_size[0]/vol_resolution)+1)
+    Y = np.linspace(startpoint[1], box_size[1],int(box_size[1]/vol_resolution)+1)
+    Z = np.linspace(startpoint[2], box_size[2],int(box_size[2]/vol_resolution)+1)
 
     if which_plane=='x':
 

@@ -275,19 +275,6 @@ def plot_coil(input_filename):
 ## test routine
 
 def test():
-    import tkinter as tk
-    from tkinter import filedialog
-    
-    try:
-        window = tk.Tk()
-        input_filename = filedialog.askopenfilename(initialdir = "~/Desktop",
-            title = "Select file containing coil geometry",
-            filetypes = (("text file", "*.txt"),("all files","*.*")))
-        
-        output_filename = filedialog.asksaveasfilename(initialdir = "~/Desktop",
-            title = "Select file to save to (*.npy binary)")
-        window.destroy()
-    except FileNotFoundError: pass
     
     # specify the volume over which the fields should be calculated
     BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
@@ -297,19 +284,18 @@ def test():
     VOLUME_RESOLUTION = 1 # cm
 
     # save result of calculation to file
-    writeTargetVolume(input_filename,output_filename, 
+    writeTargetVolume("coil.txt","yes", 
                     BOX_SIZE,START_POINT,COIL_RESOLUTION,VOLUME_RESOLUTION)
-    print("B-field output written to {}".format(output_filename))
     
     # read in computed data 
-    Bfields = readTargetVolume(output_filename)
+    Bfields = readTargetVolume("yes")
     print("Calculated B-fields loaded. Array shape:",Bfields.shape)
 
     # plot B-fields
     plot_fields(Bfields, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
         
     # plot the coil geometry
-    plot_coil(input_filename)
+    plot_coil("coil.txt")
 
 if __name__ == "__main__":
     test()

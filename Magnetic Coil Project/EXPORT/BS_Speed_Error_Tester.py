@@ -1,4 +1,5 @@
 import biot_savartv4_2 as b4
+import biot_savart_v2 as b2
 import time
 import numpy as np
 import cProfile, pstats, io
@@ -15,31 +16,45 @@ if __name__ == "__main__":
     for around 5 to 30x precision boost
     
     '''
+
+    # specify the volume over which the fields should be calculated
+    BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
+    START_POINT = (-5, -2.5, -7.5) # bottom left corner of box w.r.t. coil coordinate system
+    
+    COIL_RESOLUTION = 1 # cm
+    VOLUME_RESOLUTION = 0.5 # cm
+
+    '''b2.writeTargetVolume("midpoint1", BOX_SIZE, START_POINT, 1, 0.5)
+    print("Done")
+    b2.writeTargetVolume("midpoint01", BOX_SIZE, START_POINT, 0.1, 0.5)
+    print("Done")
+    b2.writeTargetVolume("midpoint001", BOX_SIZE, START_POINT, 0.01, 0.5)
+    print("Done")'''
+
+    b2.writeTargetVolume("midpoint05", BOX_SIZE, START_POINT, 0.67, 0.5)
     reference001 = b4.readTargetVolume("midpoint001")
     reference01 = b4.readTargetVolume("midpoint01")
     reference1 = b4.readTargetVolume("midpoint1")
+    reference05 = b4.readTargetVolume("midpoint05")
+
+    '''b4.writeTargetVolume("coil.txt", "richardson1", BOX_SIZE, START_POINT, volumeresolution=0.5)
+    print("Done")
+    b4.writeTargetVolume("coil.txt", "richardson01", BOX_SIZE, START_POINT, coilresolution=0.1, volumeresolution=0.5)
+    print("Done")'''
 
     richardson1 = b4.readTargetVolume("richardson1")
     richardson01 = b4.readTargetVolume("richardson01")
 
-    POINT = (-5, -2.5, -7.5)
+    deviationr1 = reference1 - reference001
+    deviationr1r1 = richardson1 - reference001
 
-    boi001 = b4.getFieldVector(reference001, POINT, (-5, -2.5, -7.5), 1)
-    boi01 = b4.getFieldVector(reference01, POINT, (-5, -2.5, -7.5), 1)
-    boi1 = b4.getFieldVector(reference1, POINT, (-5, -2.5, -7.5), 1)
-    boir1 = b4.getFieldVector(richardson1, POINT, (-5, -2.5, -7.5), 1)
-    boir01 = b4.getFieldVector(richardson01, POINT, (-5, -2.5, -7.5), 1)
+    b4.plot_fields(deviationr1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
 
-    print(boi001, boi01, boi1, boir1, boir01)
+    b4.plot_fields(reference05 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
 
-    print("Error with each function")
-    print("Midpoint, coil res = 1 cm", boi001 - boi1)
-    print("2 Stage Richardson, coil res = 1 cm", boi001 - boir1)
-    print("Midpoint, coil res = 0.1 cm", boi001 - boi01)
-    print("2 Stage Richardon, coil res = 0.1 cm", boi001 - boir01)
+    b4.plot_fields(deviationr1r1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
 
-    print("Midpoint, coil res = 1 cm", np.sum((reference001 - reference1)**2))
-    print("2 Stage Richardson, coil res = 1 cm", np.sum((reference001 - richardson1)**2))
-    print("Midpoint, coil res = 0.1 cm", np.sum((reference001 - reference01)**2))
-    print("2 Stage Richardon, coil res = 0.1 cm", np.sum((reference001 - richardson01)**2))
+    b4.plot_fields(reference01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+
+    b4.plot_fields(richardson01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
     

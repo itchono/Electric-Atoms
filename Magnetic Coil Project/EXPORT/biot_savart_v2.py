@@ -1,4 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.cm as cm
+import matplotlib.ticker as ticker
 '''
 BIOT-SAVART Calculator v2
 Accelerated using numpy meshgrids
@@ -107,7 +111,7 @@ def calculateField(coil, x, y, z):
     
     return B # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produceTargetVolume
 
-def produceTargetVolume(coil, boxsize, startpoint, steplength):
+def produceTargetVolume(coil, box_size, startpoint, vol_resolution):
     '''
     Generates a set of field vector values for each tuple (x, y, z) in the box.
 
@@ -116,9 +120,9 @@ def produceTargetVolume(coil, boxsize, startpoint, steplength):
     Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box
     Steplength: Spatial resolution (in cm)
     '''
-    x = np.arange(startpoint[0], startpoint[0] + boxsize[0] + steplength, steplength)
-    y = np.arange(startpoint[1], startpoint[1] + boxsize[1] + steplength, steplength)
-    z = np.arange(startpoint[2], startpoint[2] + boxsize[2] + steplength, steplength)
+    x = np.linspace(startpoint[0], box_size[0],int(box_size[0]/vol_resolution)+1)
+    y = np.linspace(startpoint[1], box_size[1],int(box_size[1]/vol_resolution)+1)
+    z = np.linspace(startpoint[2], box_size[2],int(box_size[2]/vol_resolution)+1)
     # Generate points at regular spacing, incl. end points
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
@@ -191,36 +195,93 @@ def readTargetVolume(filename):
     except:
         pass
 
-import time
-if __name__ == "__main__":
-    '''
-    A little demo program which saves the coil's corresponding target volume to file, and lets you get the B vector at any point in the box.
-    '''
-    BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
-    START_POINT = (-5, -2.5, -7.5) # where the bottom left corner of the box is w/r to the coil coordinate system.
+## plotting routines
 
-    COIL_RESOLUTION = 1 # cm; affects runtime of calculation process linearly, and increases precision up to a point
-    VOLUME_RESOLUTION = 1 # cm; affects runtime of calculation process in n^3, and size of resulting Target Volume
+def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level=0,num_contours=50):
+    # filled contour plot of Bx, By, and Bz on a chosen slice plane
 
+    # M.Y: Changed linspace to generate the correct amount of points
+    X = np.linspace(startpoint[0], box_size[0] + startpoint[0], int(box_size[0]/vol_resolution) + 1)
+    Y = np.linspace(startpoint[1], box_size[1] + startpoint[1], int(box_size[1]/vol_resolution) + 1)
+    Z = np.linspace(startpoint[2], box_size[2] + startpoint[2], int(box_size[2]/vol_resolution) + 1)
 
-    filename = input("Name of file to save target volume? (ex. TargetVolume1.npy)\n")
-    t = time.perf_counter()
-    writeTargetVolume(filename, BOX_SIZE,START_POINT, COIL_RESOLUTION, VOLUME_RESOLUTION)
-    # writes example coil to file.
-    t_end = time.perf_counter()
-    print("generated in {:.4f}s".format(t_end-t))
+    if which_plane=='x':
 
-    targetVolume = readTargetVolume(filename)
+        converted_level = np.where(X >= level)
+        B_sliced = [Bfields[converted_level[0][0],:,:,i].T for i in range(3)]
+        x_label,y_label = "y","z"
+        x_array,y_array = Y,Z
+    elif which_plane=='y':
+        converted_level = np.where(Y >= level)
+        B_sliced = [Bfields[:,converted_level[0][0],:,i].T for i in range(3)]
+        x_label,y_label = "x","z"
+        x_array,y_array = X,Z
+    else:
+        converted_level = np.where(Z >= level)
+        B_sliced = [Bfields[:,:,converted_level[0][0],i].T for i in range(3)]
+        x_label,y_label = "x","y"
+        x_array,y_array = X,Y
     
+    Bmin,Bmax = np.amin(B_sliced),np.amax(B_sliced)
+    
+    component_labels = ['x','y','z']
+    fig,axes = plt.subplots(nrows=1,ncols=4,figsize=(10,5))
+    axes[0].set_ylabel(y_label + " (cm)")
 
-    print("Target volume loaded with shape:",targetVolume.shape)
+    for i in range(3):
+        contours = axes[i].contourf(x_array,y_array,B_sliced[i],
+                                    vmin=Bmin,vmax=Bmax,
+                                    cmap=cm.magma,levels=num_contours)
+        axes[i].set_xlabel(x_label + " (cm)")
+        axes[i].set_title("$\mathcal{B}$"+"$_{}$".format(component_labels[i]))
+    
+    axes[3].set_aspect(20)
+    fig.colorbar(contours,cax=axes[3],extend='both')
+    
+    plt.tight_layout()
 
-    try:
-        while True:
-            print("Please input the position at which you want to see the B vector...")
+
+    plt.show()
+    
+def plot_coil(input_filename):
+    coil_points = parseCoil(input_filename)
+    fig = plt.figure()
+    tick_spacing = 2
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlabel("$x$ (cm)")
+    ax.set_ylabel("$y$ (cm)")
+    ax.set_zlabel("$z$ (cm)")
+    ax.plot3D(coil_points[0,:],coil_points[1,:],coil_points[2,:],lw=2)
+    for axis in [ax.xaxis,ax.yaxis,ax.zaxis]:
+        axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+    plt.tight_layout()
+    plt.show()
+
+
+## test routine
+
+def test():
+    
+    # specify the volume over which the fields should be calculated
+    BOX_SIZE = (30, 15, 15) # dimensions of box in cm (x, y, z)
+    START_POINT = (0, 0, 0) # bottom left corner of box w.r.t. coil coordinate system
+    
+    COIL_RESOLUTION = 1 # cm
+    VOLUME_RESOLUTION = 1 # cm
+
+    # save result of calculation to file
+    writeTargetVolume("yes", 
+                    BOX_SIZE,START_POINT,COIL_RESOLUTION,VOLUME_RESOLUTION)
+    
+    # read in computed data 
+    Bfields = readTargetVolume("yes")
+    print("Calculated B-fields loaded. Array shape:",Bfields.shape)
+
+    # plot B-fields
+    plot_fields(Bfields, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
         
-            position = (eval(input("x?\t")), eval(input("y?\t")), eval(input("z?\t")))
-            
-            print(getFieldVector(targetVolume, position, START_POINT, VOLUME_RESOLUTION)*1000, "mGs at {} cm".format(position))
-    except KeyboardInterrupt:
-        print("DONE")
+    # plot the coil geometry
+    plot_coil("coil.txt")
+
+if __name__ == "__main__":
+    test()
