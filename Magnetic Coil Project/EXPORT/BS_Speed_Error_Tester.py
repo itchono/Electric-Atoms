@@ -1,6 +1,4 @@
-import biot_savart_v4_dev as b4d
-import biot_savart_v4 as b4
-import biot_savart_v2 as b2
+import biot_savartv4_2 as b4
 import time
 import numpy as np
 import cProfile, pstats, io
@@ -40,53 +38,8 @@ if __name__ == "__main__":
     print("Midpoint, coil res = 0.1 cm", boi001 - boi01)
     print("2 Stage Richardon, coil res = 0.1 cm", boi001 - boir01)
 
-    print("Midpoint, coil res = 1 cm", np.linalg.norm(reference001 - reference1))
-    print("2 Stage Richardson, coil res = 1 cm", np.linalg.norm(reference001 - richardson1))
-    print("Midpoint, coil res = 0.1 cm", np.linalg.norm(reference001 - reference01))
-    print("2 Stage Richardon, coil res = 0.1 cm", np.linalg.norm(reference001 - richardson01))
-
-    print("Speed test")
-
-    pr = cProfile.Profile()
-    pr.enable()
-
-    b4.writeTargetVolume("coil.txt","yes", 
-                    (30, 15, 15),(-5, -2.5, -7.5),1,1)
-
-
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
-
-
-    pr = cProfile.Profile()
-    pr.enable()
-
-    b4d.writeTargetVolume("coil.txt","yes", 
-                    (30, 15, 15),(-5, -2.5, -7.5),1,1)
-
-
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
-
-    pr = cProfile.Profile()
-    pr.enable()
-
-    b2.writeTargetVolume("yes", 
-                    (30, 15, 15),(-5, -2.5, -7.5),1,1)
-
-
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
+    print("Midpoint, coil res = 1 cm", np.sum((reference001 - reference1)**2))
+    print("2 Stage Richardson, coil res = 1 cm", np.sum((reference001 - richardson1)**2))
+    print("Midpoint, coil res = 0.1 cm", np.sum((reference001 - reference01)**2))
+    print("2 Stage Richardon, coil res = 0.1 cm", np.sum((reference001 - richardson01)**2))
     
