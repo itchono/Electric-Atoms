@@ -31,7 +31,7 @@ if __name__ == "__main__":
     b2.writeTargetVolume("midpoint001", BOX_SIZE, START_POINT, 0.01, 0.5)
     print("Done")'''
 
-    b2.writeTargetVolume("midpoint05", BOX_SIZE, START_POINT, 0.67, 0.5)
+    b2.writeTargetVolume("midpoint05", BOX_SIZE, START_POINT, 2, 0.5)
     reference001 = b4.readTargetVolume("midpoint001")
     reference01 = b4.readTargetVolume("midpoint01")
     reference1 = b4.readTargetVolume("midpoint1")

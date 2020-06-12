@@ -138,9 +138,9 @@ def produceTargetVolume(coil, box_size, startpoint, vol_resolution):
     Startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box
     Steplength: Spatial resolution (in cm)
     '''
-    x = np.linspace(startpoint[0], box_size[0],int(box_size[0]/vol_resolution)+1)
-    y = np.linspace(startpoint[1], box_size[1],int(box_size[1]/vol_resolution)+1)
-    z = np.linspace(startpoint[2], box_size[2],int(box_size[2]/vol_resolution)+1)
+    x = np.linspace(startpoint[0], box_size[0] + startpoint[0],int(box_size[0]/vol_resolution)+1)
+    y = np.linspace(startpoint[1], box_size[1] + startpoint[1],int(box_size[1]/vol_resolution)+1)
+    z = np.linspace(startpoint[2], box_size[2] + startpoint[2],int(box_size[2]/vol_resolution)+1)
     # Generate points at regular spacing, incl. end points
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
@@ -217,9 +217,9 @@ def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level
     # filled contour plot of Bx, By, and Bz on a chosen slice plane
 
     # M.Y: Changed linspace to generate the correct amount of points
-    X = np.linspace(startpoint[0], box_size[0],int(box_size[0]/vol_resolution)+1)
-    Y = np.linspace(startpoint[1], box_size[1],int(box_size[1]/vol_resolution)+1)
-    Z = np.linspace(startpoint[2], box_size[2],int(box_size[2]/vol_resolution)+1)
+    X = np.linspace(startpoint[0], box_size[0] + startpoint[0],int(box_size[0]/vol_resolution)+1)
+    Y = np.linspace(startpoint[1], box_size[1] + startpoint[1],int(box_size[1]/vol_resolution)+1)
+    Z = np.linspace(startpoint[2], box_size[2] + startpoint[2],int(box_size[2]/vol_resolution)+1)
 
     if which_plane=='x':
 
