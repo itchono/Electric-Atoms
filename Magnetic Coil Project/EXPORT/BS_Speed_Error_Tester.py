@@ -31,11 +31,11 @@ if __name__ == "__main__":
     b2.writeTargetVolume("midpoint001", BOX_SIZE, START_POINT, 0.01, 0.5)
     print("Done")'''
 
-    b2.writeTargetVolume("midpoint05", BOX_SIZE, START_POINT, 2, 0.5)
+    b2.writeTargetVolume("midpoint2", BOX_SIZE, START_POINT, 2, 0.5)
     reference001 = b4.readTargetVolume("midpoint001")
     reference01 = b4.readTargetVolume("midpoint01")
     reference1 = b4.readTargetVolume("midpoint1")
-    reference05 = b4.readTargetVolume("midpoint05")
+    reference2 = b4.readTargetVolume("midpoint2")
 
     '''b4.writeTargetVolume("coil.txt", "richardson1", BOX_SIZE, START_POINT, volumeresolution=0.5)
     print("Done")
@@ -48,13 +48,13 @@ if __name__ == "__main__":
     deviationr1 = reference1 - reference001
     deviationr1r1 = richardson1 - reference001
 
-    b4.plot_fields(deviationr1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+    b4.plot_fields(deviationr1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
 
-    b4.plot_fields(reference05 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+    b4.plot_fields(reference2 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
 
-    b4.plot_fields(deviationr1r1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+    b4.plot_fields(deviationr1r1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
 
-    b4.plot_fields(reference01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+    b4.plot_fields(reference01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
 
-    b4.plot_fields(richardson01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=1.25)
+    b4.plot_fields(richardson01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
     
