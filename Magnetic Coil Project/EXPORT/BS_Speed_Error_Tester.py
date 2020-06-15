@@ -29,13 +29,16 @@ if __name__ == "__main__":
     b2.writeTargetVolume("midpoint01", BOX_SIZE, START_POINT, 0.1, 0.5)
     print("Done")
     b2.writeTargetVolume("midpoint001", BOX_SIZE, START_POINT, 0.01, 0.5)
-    print("Done")'''
+    print("Done")
+    b2.writeTargetVolume("midpoint2", BOX_SIZE, START_POINT, 2, 0.5)'''
 
-    b2.writeTargetVolume("midpoint2", BOX_SIZE, START_POINT, 2, 0.5)
+    
+    b2.writeTargetVolume("midpoint067", BOX_SIZE, START_POINT, 0.67, 0.5)
     reference001 = b4.readTargetVolume("midpoint001")
     reference01 = b4.readTargetVolume("midpoint01")
     reference1 = b4.readTargetVolume("midpoint1")
     reference2 = b4.readTargetVolume("midpoint2")
+    reference067 = b4.readTargetVolume("midpoint067")
 
     '''b4.writeTargetVolume("coil.txt", "richardson1", BOX_SIZE, START_POINT, volumeresolution=0.5)
     print("Done")
@@ -48,13 +51,22 @@ if __name__ == "__main__":
     deviationr1 = reference1 - reference001
     deviationr1r1 = richardson1 - reference001
 
-    b4.plot_fields(deviationr1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
+    print("Midpoint, coil res = 1 cm", np.linalg.norm(reference001 - reference1))
+    print("2 Stage Richardson, coil res = 1 cm", np.linalg.norm(reference001 - richardson1))
+    print("Midpoint, coil res = 0.1 cm", np.linalg.norm(reference001 - reference01))
+    print("2 Stage Richardon, coil res = 0.1 cm", np.linalg.norm(reference001 - richardson01))
 
-    b4.plot_fields(reference2 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
+    b4.plot_fields(deviationr1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
 
-    b4.plot_fields(deviationr1r1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
+    b4.plot_fields(reference2 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
 
-    b4.plot_fields(reference01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
+    b4.plot_fields(deviationr1r1, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
 
-    b4.plot_fields(richardson01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=4)
+    b4.plot_fields(reference067 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
+
+    b4.plot_fields(reference01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
+
+    b4.plot_fields(richardson01 - reference001, START_POINT,BOX_SIZE,VOLUME_RESOLUTION,which_plane='z',level=3)
+
+    b4.plot_coil("coil.txt")
     
