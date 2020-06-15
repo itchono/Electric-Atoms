@@ -215,8 +215,6 @@ def readTargetVolume(filename):
 
 def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level=0,num_contours=50):
     # filled contour plot of Bx, By, and Bz on a chosen slice plane
-
-    # M.Y: Changed linspace to generate the correct amount of points
     X = np.linspace(startpoint[0], box_size[0] + startpoint[0],int(box_size[0]/vol_resolution)+1)
     Y = np.linspace(startpoint[1], box_size[1] + startpoint[1],int(box_size[1]/vol_resolution)+1)
     Z = np.linspace(startpoint[2], box_size[2] + startpoint[2],int(box_size[2]/vol_resolution)+1)
@@ -272,3 +270,10 @@ def plot_coil(input_filename):
         axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
     plt.tight_layout()
     plt.show()
+
+if __name__ == "__main__":
+    coil = sliceCoil(parseCoil("coil.txt"), 1)
+
+    volume = produceTargetVolume(coil, (1, 1, 1), (-0.5, -0.5, -0.5), 1)
+
+    print(volume)
