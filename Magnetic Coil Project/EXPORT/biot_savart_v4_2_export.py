@@ -270,10 +270,3 @@ def plot_coil(input_filename):
         axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
     plt.tight_layout()
     plt.show()
-
-if __name__ == "__main__":
-    coil = sliceCoil(parseCoil("coil.txt"), 1)
-
-    volume = produceTargetVolume(coil, (1, 1, 1), (-0.5, -0.5, -0.5), 1)
-
-    print(volume)
