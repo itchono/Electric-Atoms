@@ -2,6 +2,8 @@
 Biot-Savart Magnetic Field Calculator v4.2
 Mingde Yin
 Ryan Zazo
+
+All lengths are in cm, B-field is in G
 '''
 
 import numpy as np
@@ -11,20 +13,12 @@ import matplotlib.cm as cm
 import matplotlib.ticker as ticker
 
 '''
+Feature Wishlist:
+    improve plot_coil with different colors for different values of current
 
-You will need to provide:
-- series of points in (x, y, z, I) describing the geometry of a coil in a text file.
-    - Each section of coil will have some amount of current flowing through it, in the forwards direction of the points in the coil.
-    - The current in a given segment of coil is defined by the current listed at the starting point of the coil
-    - Ex. P1------P2 is on our coil. The current P1 --> P2 is given by I1 (assuming P1 = (x1, y1, z1, I1))
+    accelerate integrator to use meshgrids directly instead of a layer of for loop
 
-- rectangular volume over which the fields need to be calculated
-- resolution at which fields should be calculated
-- all lengths in cm, B-field in G
-
-wishlist:
-    1. improve plot_coil with different colors for different values of current?
-    2. improve plot_fields to reduce space between Bz plot and colorbar ---- done
+    get parsecoil to use vectorized function instead of for loop
 '''
 
 def parseCoil(filename):
@@ -35,9 +29,9 @@ def parseCoil(filename):
 
     The current I of the vertex, defines the amount of current running through the next segment of coil, in amperes.
 
-    ex. (0, 0, 1, 2), (0, 1, 1, 3), (1, 1, 1, 4) means that:
+    i.e. (0, 0, 1, 2), (0, 1, 1, 3), (1, 1, 1, 4) means that:
     - There are 2 amps of current running between points 1 and 2
-    - There are 3 amps of current running between points 3 and 4
+    - There are 3 amps of current running between points 2 and 3
     - The last bit of current is functionally useless.
     '''
     with open(filename, "r") as f: return np.array([[eval(i) for i in line.split(",")] for line in f.read().splitlines()]).T
@@ -71,6 +65,7 @@ def sliceCoil(coil, steplength):
     # create segments; determine start and end of each segment, as well as segment lengths
 
     # chop up into smaller bits (elements)
+
     stepnumbers = (segment_lengths/steplength).astype(int)
     # determine how many steps we must chop each segment into
 
@@ -79,9 +74,9 @@ def sliceCoil(coil, steplength):
         # set of new interpolated points to feed in
         newcoil = np.vstack((newcoil, newrows))
 
-    ## Force the coil to have an even number of segments, for Richardson Extrapolation
     if newcoil.shape[0] %2 != 0: newcoil = np.vstack((newcoil, newcoil[-1,:]))
-    
+    ## Force the coil to have an even number of segments, for Richardson Extrapolation to work
+
     return newcoil[1:,:].T # return non-dummy columns
 
 def calculateField(coil, x, y, z):
@@ -100,16 +95,17 @@ def calculateField(coil, x, y, z):
         '''
         Produces tiny segment of magnetic field vector (dB) using the midpoint approximation over some interval
 
-        for future optimization: Get this to work with meshgrids
+        TODO for future optimization: Get this to work with meshgrids directly
         '''
         dl = (end-start).T
         mid = (start+end)/2
         position = np.array((x-mid[0], y-mid[1], z-mid[2])).T
+        # relative position vector
         mag = np.sqrt((x-mid[0])**2 + (y-mid[1])**2 + (z-mid[2])**2)
+        # magnitude of the relative position vector
 
         return start[3] * np.cross(dl[:3], position) / np.array((mag ** 3, mag ** 3, mag ** 3)).T
-
-        # Biot-Savart Law
+        # Apply the Biot-Savart Law to get the differential magnetic field
         # current flowing in this segment is represented by start[3]
 
     B = 0
@@ -142,7 +138,6 @@ def produceTargetVolume(coil, box_size, startpoint, vol_resolution):
     
     Z, Y, X = np.meshgrid(z, y, x, indexing='ij')
     # NOTE: Requires axes to be flipped in order for meshgrid to have the correct dimensional order
-    # it's just a weird thing with numpy
 
     return calculateField(coil, X,Y,Z)
 
@@ -163,17 +158,8 @@ def getFieldVector(targetVolume, position, startpoint, volumeresolution):
     # basic error checking to see if you actually got a correct input/output
 
 '''
-EXTERNAL USAGE
-
-Import all functions in this file
-
-- The coil will load in from the selected file
-- You must then slice the coil
-- You must then produce a Target Volume using the coil
-- Then, you can either use getFieldVector(), or index on your own
-
-- If you are indexing on your own, remember to account for the offset (starting point), and spatial resolution
-- something like <relativePosition = ((np.array(position) - np.array(startpoint)) / volumeresolution).astype(int)>
+- If you are indexing a targetvolume meshgrid on your own, remember to account for the offset (starting point), and spatial resolution
+- You will need an index like <relativePosition = ((np.array(position) - np.array(startpoint)) / volumeresolution).astype(int)>
 '''
 
 def writeTargetVolume(input_filename,output_filename, boxsize, startpoint, 
@@ -190,9 +176,8 @@ def writeTargetVolume(input_filename,output_filename, boxsize, startpoint,
     chopped = sliceCoil(coil, coilresolution)
     targetVolume = produceTargetVolume(chopped, boxsize, startpoint, volumeresolution)
 
-    with open(output_filename, "wb") as f:
-        np.save(f, targetVolume)
-
+    with open(output_filename, "wb") as f: np.save(f, targetVolume)
+    # stored in standard numpy pickle form
 
 def readTargetVolume(filename):
     '''
