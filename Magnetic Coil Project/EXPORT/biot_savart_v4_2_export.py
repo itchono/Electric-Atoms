@@ -1,3 +1,9 @@
+'''
+Biot-Savart Magnetic Field Calculator v4.2
+Mingde Yin
+Ryan Zazo
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -5,7 +11,6 @@ import matplotlib.cm as cm
 import matplotlib.ticker as ticker
 
 '''
-B-field calculator using Biot-Savart law 
 
 You will need to provide:
 - series of points in (x, y, z, I) describing the geometry of a coil in a text file.
@@ -17,20 +22,6 @@ You will need to provide:
 - resolution at which fields should be calculated
 - all lengths in cm, B-field in G
 
-version history:
-    v2: Mingde Yin  May 31, 2020. Accelerated using numpy meshgrids
-    v2.1: Jun 1, 2020. tkinter dialogs for opening & saving files. Defaults of 1 cm resolution in calculation.
-    v3: Ryan Zazo  Jun 1, 2020. Plotting code integrated.
-    v3.1: Minor cosmetic improvements to plot.
-    v3.2: 3D plot of coil geometry.
-    v3.3: Plotted B-fields together but code is long.
-    v3.5: all B-field plots together
-    v3.7: B-fields plotted together with 50 levels (now works on windows) and combined v3.3 and v3.5
-    v3.8: Changed up all np.aranges to np.linspaces and changed up the plotting code to work with non-integer step sizes and non-integer levels
-    v4: Mingde Yin June 9, 2020 Using Richardson Extrapolation for midpoint rule to improve accuracy (5 to 30x better at 1.4x speed penalty), tweaked linspaces to correctly do step size
-    v4.1: Minor change in function indexing to use more numpy, cleaning up for export
-    v4.2: Changed the linspaces a bit to make everything more symmetric
-
 wishlist:
     1. improve plot_coil with different colors for different values of current?
     2. improve plot_fields to reduce space between Bz plot and colorbar ---- done
@@ -38,32 +29,38 @@ wishlist:
 
 def parseCoil(filename):
     '''
-    Parses 4 column CSV into x,y,z,I slices for coil
+    Parses 4 column CSV into x,y,z,I slices for coil.
+
+    Each (x,y,z,I) entry defines a vertex on the coil.
+
+    The current I of the vertex, defines the amount of current running through the next segment of coil, in amperes.
+
+    ex. (0, 0, 1, 2), (0, 1, 1, 3), (1, 1, 1, 4) means that:
+    - There are 2 amps of current running between points 1 and 2
+    - There are 3 amps of current running between points 3 and 4
+    - The last bit of current is functionally useless.
     '''
     with open(filename, "r") as f: return np.array([[eval(i) for i in line.split(",")] for line in f.read().splitlines()]).T
 
-'''
-FILE FORMAT for coil.txt:
-
-x1,y1,z1,I1
-x2,y2,z2,I2
-.
-.
-xn,yn,zn,In
-'''
-
 def sliceCoil(coil, steplength):
     '''
-    Slices a coil into smaller steplength-sized pieces based on the coil resolution
+    Slices a coil into pieces of size steplength.
+
+    If the coil is already sliced into pieces smaller than that, this does nothing.
     '''
     def interpolatePoints(p1, p2, parts):
         '''
-        Produces a series of linearly spaced points between two given points in R3+I (retains same current)
+        Produces a series of linearly spaced points between two given points in R3+I
+
+        Linearly interpolates X,Y,Z; but keeps I the SAME
+
+        i.e. (0, 2, 1, 3), (3, 4, 2, 5), parts = 2:
+        (0, 2, 1, 3), (1.5, 3, 1.5, 3), (3, 4, 2, 5)
         '''
         return np.column_stack((np.linspace(p1[0], p2[0], parts+1), np.linspace(p1[1], p2[1], parts+1),
                 np.linspace(p1[2], p2[2], parts+1), p1[3] * np.ones((parts+1))))
 
-    newcoil = np.zeros((1, 4)) # fill with dummy first column
+    newcoil = np.zeros((1, 4)) # fill column with dummy data, we will remove this later.
 
     segment_starts = coil[:,:-1]
     segment_ends = coil[:,1:]
