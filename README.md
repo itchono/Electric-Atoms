@@ -2,7 +2,7 @@
 
 This tool numerically solves for the magnetic field around an arbitrarily shaped coil specified by the user, in a discrete and finite volume surrounding the coil.
 
-Latest Version: V4.2 (June 19, 2020)
+Latest Version: V4.3 (June 20, 2020)
 
 # Basic Overview of Functionality
 Given an input coil, the tool can both calculate, and plot the magnetic field vector over a finite volume of space around the coil.
@@ -111,3 +111,4 @@ code to work with non-integer step sizes and non-integer levels
 * v4: Using Richardson Extrapolation for midpoint rule to improve accuracy (5 to 30x better at 1.4x speed penalty), tweaked linspaces to correctly do step size
 * v4.1: Minor change in function indexing to use more numpy, cleaning up for export
 * v4.2: Changed the linspaces a bit to make everything more symmetric
+* v4.3: Added in many functions for plotting rectangular and circular coils.

@@ -1,5 +1,5 @@
 '''
-Biot-Savart Magnetic Field Calculator v4.2
+Biot-Savart Magnetic Field Calculator v4.3
 Mingde Yin
 Ryan Zazo
 
@@ -196,6 +196,19 @@ def readTargetVolume(filename):
 ## plotting routines
 
 def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level=0,num_contours=50):
+    '''
+    Plots the set of Bfields in the given region, at the specified resolutions. 
+    
+    Bfields: A 4D array of the Bfield.
+    startpoint: (x, y, z) = (0, 0, 0) = bottom left corner position of the box AKA the offset
+    box_size: (x, y, z) dimensions of the box in cm
+    vol_resolution: Division of volumetric meshgrid (generate a point every VolumeResolution cm)
+    which_plane: Plane to plot on, can be "x", "y" or "z"
+    level : The "height" of the plane. For instance the Z = 5 plane would have a level of 5
+    num_contours: THe amount of contours on the contour plot.
+    
+    '''
+
     # filled contour plot of Bx, By, and Bz on a chosen slice plane
     X = np.linspace(startpoint[0], box_size[0] + startpoint[0],int(box_size[0]/vol_resolution)+1)
     Y = np.linspace(startpoint[1], box_size[1] + startpoint[1],int(box_size[1]/vol_resolution)+1)
@@ -240,6 +253,11 @@ def plot_fields(Bfields,startpoint,box_size,vol_resolution,which_plane='z',level
     plt.show()
     
 def plot_coil(input_filename):
+    '''
+    Plots the coil in the input_filename file. A useful sanety check.
+    
+    input_filename: Name of the file containing the coil. Should have a .txt extension and formatted appropriately.
+    '''
     coil_points = parseCoil(input_filename)
     fig = plt.figure()
     tick_spacing = 2
@@ -252,3 +270,216 @@ def plot_coil(input_filename):
         axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
     plt.tight_layout()
     plt.show()
+    
+    
+def create_B_x_rectangle(name,p0=[-21.59,-38.1,-21.59,1],L = 76.20,W= 43.18):
+    '''
+    Creates a rectangle of the Y-Z plane that produces a B_x field.
+    
+    name: filename to output to. Should be a .txt file.
+    p0: [x0,y0,z0,Current] Starting point of the rectangle.
+    L: Length (on Z)
+    W: Width (on y)
+    '''
+    f = open(name,"w")
+
+    p1 = [p0[0],p0[1]+W,p0[2],p0[3]]
+    p2 = [p0[0],p0[1]+W,p0[2]+L ,p0[3]]
+    p3 = [p0[0],p0[1],p0[2]+L,p0[3]]
+
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p1)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p2)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p3)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+    f.close()
+
+
+def create_B_y_rectangle(name,p0=[-21.59,-38.1,-21.59,1], L = 76.20, D= 43.18):
+
+    '''
+    Creates a rectangle of the X-Z plane that produces a B_y field.
+    
+    name: filename to output to. Should be a .txt file.
+    p0: [x0,y0,z0,Current] Starting point of the rectangle.
+    L: Length (on Z)
+    D: Depth (on X)
+    '''
+
+    f = open(name,"w")
+
+    p1 = [p0[0], p0[1] , p0[2]+L, p0[3]]
+    p2 = [p0[0] + D , p0[1] , p0[2]+L, p0[3]]
+    p3 = [p0[0] + D , p0[1], p0[2], p0[3]]
+
+
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p1)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p2)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p3)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+    f.close()
+
+
+
+def create_B_z_rectangle(name,p0=[-26.67,-26.67,-26.67,1], H= 53.340, DD = 53.340):
+    '''
+    Creates a rectangle of the X-Y plane that produces a B_z field.
+    
+    name: filename to output to. Should be a .txt file.
+    p0: [x0,y0,z0,Current] Starting point of the rectangle.
+    H: Height (on Y)
+    DD: Depth (on X)
+    '''
+    f = open(name,"w")
+
+    p1 = [p0[0] + DD, p0[1], p0[2], p0[3]]
+    p2 = [p0[0] + DD, p0[1]+H, p0[2], p0[3]]
+    p3 = [p0[0], p0[1]+H, p0[2], p0[3]]
+
+
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p1)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p2)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p3)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    line = str(p0)
+    line = line[1:len(line)-1] + "\n"
+    f.write(line)
+
+    f.close()
+    
+def helmholtz_coils(fname1, fname2, numSegments, radius, spacing, current):
+    '''
+    Creates a pair of Helmholtz Coils that are parallel to the X-Y plane.
+    
+    fname1: Name of the file where the first coil will be saved.
+    fname2: Name of the file where the second coil will be saved.
+    numSegments: Number of segments per coil
+    radius: Radius of the coils
+    spacing: Spacing between the coils. The first coil will be located at -spacing/2 and the 2nd coil will be located at spacing/2 on the Z plane
+    current: The current that goest through each coil.
+    '''
+
+    f = open(fname1,"w")
+    line = ""
+    for i in range(0,numSegments,1):
+        line = str(np.cos(2*np.pi*(i)/(numSegments-1))*Radius) + "," + str(np.sin(2*np.pi*(i)/(numSegments-1))*Radius) + "," + str(-spacing/2.0) + "," + str(current) + "\n"
+        f.write(line)
+    f.close()
+
+
+
+    f = open(fname2,"w")
+    line = ""
+    for i in range(0,numSegments,1):
+        line = str(np.cos(2*np.pi*(i)/(numSegments-1))*Radius) + "," + str(np.sin(2*np.pi*(i)/(numSegments-1))*Radius) + "," + str(spacing/2.0) + "," + str(current) + "\n"
+        f.write(line)
+    f.close()
+    
+    
+def create_Bx_circle(fname, numSegments, radius, spacing, current):
+    '''
+    Creates a coil on the Y-Z plane that produces a B_x field.
+    
+    fname: Name of the file where the first coil will be saved.
+    numSegments: Number of segments per coil
+    radius: Radius of the coil
+    spacing: Spacing between the coil and the Y-Z plane
+    current: The current that goest through the coil.
+    center: (y,z) The center of the coil on the Y-Z plane
+    '''
+    
+    
+    f = open(fname,"w")
+    line = ""
+    for i in range(0,numSegments,1):
+        line = str(spacing) + "," + str(np.cos(2*np.pi*(i)/(numSegments-1))*Radius + center[0])  + "," + str(np.sin(2*np.pi*(i)/(numSegments-1))*Radius + center[1]) +  "," + str(current) + "\n"
+        f.write(line)
+    f.close()
+    
+    
+def create_By_circle(fname, numSegments, radius, spacing, current):
+    '''
+    Creates a coil on the X-Z plane that produces a B_y field.
+    
+    fname: Name of the file where the first coil will be saved.
+    numSegments: Number of segments per coil
+    radius: Radius of the coil
+    spacing: Spacing between the coil and the X-Z plane
+    current: The current that goest through the coil.
+    center: (x,z) The center of the coil on the X-Z plane
+    '''
+    
+    
+    f = open(fname,"w")
+    line = ""
+    for i in range(0,numSegments,1):
+        line = str(np.cos(2*np.pi*(i)/(numSegments-1))*Radius + center[0])  + "," + str(spacing) + "," + str(np.sin(2*np.pi*(i)/(numSegments-1))*Radius + center[1]) +  "," + str(current) + "\n"
+        f.write(line)
+    f.close()
+    
+    
+def create_Bz_circle(fname, numSegments, radius, spacing, current, center):
+    '''
+    Creates a coil on the X-Y plane that produces a B_z field.
+    
+    fname: Name of the file where the first coil will be saved.
+    numSegments: Number of segments per coil
+    radius: Radius of the coil
+    spacing: Spacing between the coil and the X-Y plane
+    current: The current that goest through the coil.
+    center: (x,y) The center of the coil on the X-Y plane
+    '''
+    
+    
+    f = open(fname,"w")
+    line = ""
+    for i in range(0,numSegments,1):
+        line = str(np.cos(2*np.pi*(i)/(numSegments-1))*Radius + center[0]) + "," + str(np.sin(2*np.pi*(i)/(numSegments-1))*Radius + center[1]) + "," + str(spacing) + "," + str(current) + "\n"
+        f.write(line)
+    f.close()
+
+
