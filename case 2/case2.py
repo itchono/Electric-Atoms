@@ -40,7 +40,7 @@ def propagate(starting_state, ang_freq, B, end_time, num_steps):
 if __name__ == "__main__":
     P_0 = np.array([[1,0], [0, 0]]) # Initial Starting State
 
-    P_t = propagate(P_0, 0, 0.01, 10**-4, 100)
+    P_t = propagate(P_0, 5, 0.01, 10**-4, 500)
     # DC mode; no transitions are driven, as expected
 
     print(P_t[-1,:, :])
