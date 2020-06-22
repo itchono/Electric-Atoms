@@ -28,21 +28,24 @@ def propagate(starting_state, ang_freq, B, end_time, num_steps):
     dt = complex(end_time / num_steps) # timestep
 
     for i in range(num_steps-1):
-        result[:,i+1] = result[:,i] + np.matmul(H[i,:,:],result[:,i].T)/(0+1j) * dt
+
+        dr = np.matmul(H[i,:,:],result[:,i])/(0+1j) * dt
+        print(dr)
+        result[:,i+1] = result[:,i] + dr
     return result
 
 
 if __name__ == "__main__":
     P_0 = np.array([1,0]) # Initial Starting State
 
-    P_t = propagate(P_0, 0, 0.01, 10**-4, 50)
+    P_t = propagate(P_0, 0, 0.01, 10**-4, 5)
     # DC mode; no transitions are driven, as expected
 
     print(P_t[:, -1]**2)
 
 
-    P_t = propagate(P_0, 200000000, 0.01, 10**-4, 50)
-    # DC mode; no transitions are driven, as expected
+    P_t = propagate(P_0, 30000000000, 10, 10**-4, 5)
+    # AC; ????
 
     print(P_t[:, -1]**2)
 
