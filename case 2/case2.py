@@ -18,29 +18,27 @@ def propagate(starting_state, ang_freq, B, end_time, num_steps):
     '''
     Uses schrodinger equation to propagate over time
     '''
-    result = np.zeros((2, num_steps)).astype(complex)
+    result = np.zeros((num_steps, 2, 2)).astype(complex)
 
-    result[0, :] = starting_state
+    result[0, :, :] = starting_state
 
     H = hamiltonian(ang_freq, B, end_time, num_steps)
 
     dt = complex(end_time / num_steps) # timestep
 
     for i in range(num_steps-1):
-        result[i+1, :] = result[i,:] + (H[i,:,:] * result[i,:])/(0+1j) * dt
+        result[i+1, :,:] = result[i,:,:] + (np.matmul(H[i,:,:], result[i,:,:]) - np.matmul(result[i,:,:], H[i,:,:]))/(0+1j) * dt
 
     return result
 
 
 if __name__ == "__main__":
-    P_0 = np.array([1,0]) # Initial Starting State
-
-    P_0.reshape((2,1))
+    P_0 = np.array([[1,0], [0, 0]]) # Initial Starting State
 
     P_t = propagate(P_0, 0, 0.01, 10**-4, 10)
     # DC mode; no transitions are driven, as expected
 
-    print(P_t[-1,:])
+    print(P_t[-1,:, :])
 
     ''' P_t = propagate(P_0, 2, 0.01, 10, 10)
         # 200 kpi radians per second
