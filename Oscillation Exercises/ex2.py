@@ -15,30 +15,24 @@ def equation_system(r,t,Omega,w0,w):
 
     return rhodot_00, rhodot_01_r, rhodot_01_i
 
-yeet = np.linspace(160, 200, 81)
-
-prob = []
-
-for i in yeet:
-
-    TRANSITON_FREQUENCY = 177
-    BIG_OMEGA = 1
-    # solution
-    t = np.linspace(0,np.pi/BIG_OMEGA,200) # time units in terms of microseconds
-
-    r_init = np.array([1,0,0]) # initial starting state of the DEs
-
-    w,w0 = 2*pi*TRANSITON_FREQUENCY,2*pi*i # forced oscillation frequency vs energy level frequency
-    Omega = 2*pi*BIG_OMEGA
-
-    solution = odeint(equation_system, r_init, t, args=(Omega,w,w0))
-
-    rho_11 = 1-solution[:,0][-1]
-    print("Done")
-
-    prob.append(rho_11)
-
-
-plt.plot(yeet, np.array(prob), 'x',lw=2,label=r"$\rho_{00}$")
+## rabi lineshape
+w0 = 2*pi*438*10**6
+T = 0.1
+Omega = pi/T
+frequencies = 2*pi*np.linspace(100*10**6,900*10**6, 300)
+rhos = []
+t = np.linspace(0,T,1000)
+r_init = np.array([1,0,0])
+for w in frequencies:
+    solution = odeint(equation_system,r_init,t,args=(Omega,w,w0))
+    rho_00 = solution[:,0]
+    rho_11_at_T = 1-rho_00[-1]
+    rhos.append(rho_11_at_T)
+rhos = np.array(rhos)
+fig, ax = plt.subplots()
+ax.plot(frequencies/(2*pi),rhos,'x',lw=2,label=r"$\rho_{00}$")
+ax.set_ylabel(r"$\rho_{00}$")
+ax.set_xlabel(r"$\omega/2\pi$")
+ax.margins(0,0.1)
 plt.show()
 
