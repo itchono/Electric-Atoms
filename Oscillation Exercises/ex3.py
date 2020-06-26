@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 import matplotlib.ticker as ticker
 import matplotlib.animation as animation
+import mpl_toolkits.mplot3d.axes3d as p3
 
 
 # units in MHz
@@ -45,11 +46,10 @@ def solve(TRANSITON_FREQUENCY, OSCILLATION_FREQUENCY, RABI_FREQUENCY):
 
     return b_x, b_y, b_z
 
-fig = plt.figure()
-
 bx, by, bz = solve(TRANSITON_FREQUENCY, OSCILLATION_FREQUENCY, RABI_FREQUENCY)
 
-ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure()
+ax = p3.Axes3D(fig)
 
 ax.set_xlabel("$b_x$")
 ax.set_ylabel("$b_y$")
@@ -60,35 +60,46 @@ tick_spacing = 0.5
 for axis in [ax.xaxis,ax.yaxis,ax.zaxis]:
     axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
 
+theta, phi = np.linspace(0,pi,20), np.linspace(0,2*pi,20)
+Theta,Phi = np.meshgrid(theta,phi)
+
+x = np.outer(np.cos(phi), np.sin(theta))
+y = np.outer(np.sin(phi), np.sin(theta))
+z = np.outer(np.ones(np.size(phi)), np.cos(theta))
 
 def init():
-    north_blob, = ax.plot3D([0],[0],[1],'ro')
-    south_blob, = ax.plot3D([0],[0],[-1],'go')
-    plot_args = {'rstride': 1, 'cstride': 1, 'linewidth': 0.05, 'color': 'r', 'alpha': 0.05, 'antialiased':True}
     # Annotate points
-    ax.text(0,0,1.2,r"$|0\rangle$")
-    ax.text(0,0,-1.2,r"$|1\rangle$")
-    return (north_blob,) + (south_blob,)
+    ax.text(0,0,1.2,r"$|1\rangle$")
+    ax.text(0,0,-1.2,r"$|0\rangle$")
 
-
-def animate(i):
-    ax.text(0,0,1.5,f"{i}")
-    north_blob, = ax.plot3D([0],[0],[1],'ro')
-    south_blob, = ax.plot3D([0],[0],[-1],'go')
-    bx, by, bz = solve(TRANSITON_FREQUENCY-50 + i, OSCILLATION_FREQUENCY, RABI_FREQUENCY)
-
-    ax.clear()
-
-    line, = ax.plot3D(bx,by,bz,lw=2)
     ax.set_xlim3d(-1,1)
     ax.set_ylim3d(-1,1)
     ax.set_zlim3d(-1,1)
 
+    north_blob, = ax.plot3D([0],[0],[1],'ro')
+    south_blob, = ax.plot3D([0],[0],[-1],'go')
+
+
+    return (north_blob,) + (south_blob,)
+
+def animate(i):
+    ax.clear()
+    north_blob, = ax.plot3D([0],[0],[1],'ro')
+    south_blob, = ax.plot3D([0],[0],[-1],'go')
+    bx, by, bz = solve(TRANSITON_FREQUENCY-100 + i, OSCILLATION_FREQUENCY, RABI_FREQUENCY)
+
+    ax.text(0,0,0,f"{i}")
+    ax.set_xlim3d(-1,1)
+    ax.set_ylim3d(-1,1)
+    ax.set_zlim3d(-1,1)
+
+    line, = ax.plot3D(bx,by,bz,lw=2,c=[i/200, 1-i/200, 1-i/200])
+
+    
+
     return (line,) + (north_blob,) + (south_blob,)
 
-
-
 ani = animation.FuncAnimation(fig, animate, init_func=init, 
-                                frames=100, interval=5, blit=True)
+                                frames=200, interval=5, blit=True)
 
 plt.show()
