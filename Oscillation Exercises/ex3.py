@@ -4,11 +4,12 @@ from numpy import pi,sin,cos,tan,sqrt
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 import matplotlib.ticker as ticker
+import matplotlib.animation as animation
 
 
 # units in MHz
 TRANSITON_FREQUENCY = 177
-OSCILLATION_FREQUENCY = 177
+OSCILLATION_FREQUENCY = 150
 RABI_FREQUENCY = 10
 
 def solve(TRANSITON_FREQUENCY, OSCILLATION_FREQUENCY, RABI_FREQUENCY):
@@ -44,7 +45,6 @@ def solve(TRANSITON_FREQUENCY, OSCILLATION_FREQUENCY, RABI_FREQUENCY):
 
     return b_x, b_y, b_z
 
-
 fig = plt.figure()
 
 bx, by, bz = solve(TRANSITON_FREQUENCY, OSCILLATION_FREQUENCY, RABI_FREQUENCY)
@@ -55,15 +55,40 @@ ax.set_xlabel("$b_x$")
 ax.set_ylabel("$b_y$")
 ax.set_zlabel("$b_z$")
 
-ax.plot3D([0],[0],[1],'ro')
-ax.plot3D([0],[0],[-1],'go')
-
-ax.text(0,0,1.2,r"$|1\rangle$")
-ax.text(0,0,-1.2,r"$|0\rangle$")
-
 tick_spacing = 0.5
 
 for axis in [ax.xaxis,ax.yaxis,ax.zaxis]:
     axis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-ax.plot3D(bx,by,bz,lw=2)
+
+
+def init():
+    north_blob, = ax.plot3D([0],[0],[1],'ro')
+    south_blob, = ax.plot3D([0],[0],[-1],'go')
+    plot_args = {'rstride': 1, 'cstride': 1, 'linewidth': 0.05, 'color': 'r', 'alpha': 0.05, 'antialiased':True}
+    # Annotate points
+    ax.text(0,0,1.2,r"$|0\rangle$")
+    ax.text(0,0,-1.2,r"$|1\rangle$")
+    return (north_blob,) + (south_blob,)
+
+
+def animate(i):
+    ax.text(0,0,1.5,f"{i}")
+    north_blob, = ax.plot3D([0],[0],[1],'ro')
+    south_blob, = ax.plot3D([0],[0],[-1],'go')
+    bx, by, bz = solve(TRANSITON_FREQUENCY-50 + i, OSCILLATION_FREQUENCY, RABI_FREQUENCY)
+
+    ax.clear()
+
+    line, = ax.plot3D(bx,by,bz,lw=2)
+    ax.set_xlim3d(-1,1)
+    ax.set_ylim3d(-1,1)
+    ax.set_zlim3d(-1,1)
+
+    return (line,) + (north_blob,) + (south_blob,)
+
+
+
+ani = animation.FuncAnimation(fig, animate, init_func=init, 
+                                frames=100, interval=5, blit=True)
+
 plt.show()
