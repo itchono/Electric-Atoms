@@ -28,7 +28,7 @@ def equation_system(r,t,Omega,w0,w):
 
 
 # solution
-t = np.linspace(0,1/BIG_OMEGA,200) # time units in terms of microseconds
+t = np.linspace(0,1/BIG_OMEGA,2000) # time units in terms of microseconds
 
 r_init = np.array([1,0,0]) # initial starting state of the DEs
 
@@ -47,12 +47,13 @@ w0 = 2*pi*(177-DELTA) # forced oscillation frequency vs energy level frequency
 solution = odeint(equation_system, r_init, t, args=(Omega,w,w0))
 axes.plot(t,1-solution[:,0],lw=2,label=f"-{DELTA}",color='C2')
 
+
+# predict analytic solution
 amp_factor = 1/(1+(DELTA/BIG_OMEGA)**2)
 time_factor = sqrt(1+(DELTA/BIG_OMEGA)**2) # YES I DID IT
 
 prediction = amp_factor*(sin(2*pi*time_factor*BIG_OMEGA/2*t))**2
 axes.plot(t,prediction, "--",lw=2,label="prediction",color='C3')
-
 
 axes.margins(0,0.1)
 plt.legend()
