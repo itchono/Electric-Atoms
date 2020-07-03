@@ -3,13 +3,12 @@ from numpy import pi,sin,cos,tan,sqrt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-ANIM_RANGE = 30 * 6
+RANGE = 50 * 6
 # Range of frequencies we want. multiplying by 6 is so that we multiply by roughly 2 pi to turn into angular frequency.
 
 w0 = 2*pi*177 # transition energy for m = 0 2s hyperfine transition in hydrogen
 T = 0.1
 Omega = pi/T
-
 
 # Rotating Wave Approximation; Unitary Transformation Matrix for system at time T
 def U(t,Omega,w0,w):
@@ -22,7 +21,7 @@ t = np.linspace(0,T,50) # set of all times being used for evaluation of the bloc
 
 fig = plt.figure(figsize=plt.figaspect(0.4))
 
-ax = fig.add_subplot(121, projection='3d')
+ax = fig.add_subplot(122, projection='3d')
 
 ax.set_xlim3d([-1.0, 1.0])
 ax.set_ylim3d([-1.0, 1.0])
@@ -45,7 +44,7 @@ ax.set_title("Bloch Sphere Trajectory vs Delta")
 ax.legend()
 
 
-ax2 = fig.add_subplot(122)
+ax2 = fig.add_subplot(121)
 
 ax2.set_xlabel(r"$\omega/2\pi$")
 
@@ -53,8 +52,11 @@ recorded_delta = [] # recorded frequencies during animation
 recorded_bz_final = [] # recorded bz(T) during animation
 recorded_bz_max = [] # recorded max(bz) during animation
 
-bruh1, = ax2.plot([],[],'x',label="$b_z(T)$")
-bruh2, = ax2.plot([],[],'o',label="$max({b_z(t)})$")
+bruh1, = ax2.plot([0],[0],'-',label="$b_z(T)$")
+bruh2, = ax2.plot([0],[0],'-',label="$max({b_z(t)})$")
+
+ax2.set_xlim([(w0-RANGE)/(2*pi), (w0+RANGE)/(2*pi)])
+ax2.set_ylim([-1, 1])
 
 ax2.grid = True
 ax2.margins(0,0.1)
@@ -62,12 +64,13 @@ ax2.set_title("$Recorded\ b_z(T)\ vs\ max({b_z(t)})$")
 ax2.legend()
 
 
-
 def animate(i):
-    w = w0-ANIM_RANGE+i # driving frequency
+    w = w0 - RANGE + i
 
-    vg = np.array([U(ti,Omega,w0,w)[0,0] for ti in t])
-    ve = np.array([U(ti,Omega,w0,w)[1,0] for ti in t])
+    arr = [U(ti,Omega,w0,w) for ti in t]
+
+    vg = np.array([el[0, 0] for el in arr])
+    ve = np.array([el[1, 0] for el in arr])
 
     bx = 2*(ve*vg.conjugate()).real
     by = 2*(ve*vg.conjugate()).imag
@@ -79,9 +82,10 @@ def animate(i):
     terminal.set_data([bx[-1]],[by[-1]])
     terminal.set_3d_properties([bz[-1]])
 
-    recorded_delta.append(w)
-    recorded_bz_final.append(bz[-1])
-    recorded_bz_max.append(max(bz))
+    if len(recorded_delta) < 2*RANGE:
+        recorded_delta.append(w)
+        recorded_bz_final.append(bz[-1])
+        recorded_bz_max.append(max(bz))
 
     mag = sqrt((Omega)**2 + (w0-w)**2)
 
@@ -91,10 +95,8 @@ def animate(i):
     bruh1.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_final)
     bruh2.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_max)
 
-    print(bruh1)
+    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,) + (bruh2,) + (bruh1,)
 
-    return (bruh2,) + (bruh1,) + (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,)
-
-ani = animation.FuncAnimation(fig, animate,
-                                frames=2*ANIM_RANGE, interval=5, blit=True)
+ani = animation.FuncAnimation(fig, animate,frames=2*RANGE, interval=1, blit=True)
+# set blit to False if you want to rotate the plot (warning: slow)
 plt.show()
