@@ -16,10 +16,10 @@ def equation_system(r,t,Omega,w0,w):
     return rhodot_00, rhodot_01_r, rhodot_01_i
 
 ## rabi lineshape
-w0 = 2*pi*438*10**6
+w0 = 2*pi*177
 T = 0.1
 Omega = pi/T
-frequencies = 2*pi*np.linspace(100*10**6,900*10**6, 300)
+frequencies = 2*pi*np.linspace(157,197,300)
 rhos = []
 t = np.linspace(0,T,1000)
 r_init = np.array([1,0,0])
