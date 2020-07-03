@@ -59,3 +59,22 @@ axes.margins(0,0.1)
 plt.legend()
 plt.show()
 
+
+fig, axes = plt.subplots(nrows=1)
+DELTAS = np.linspace(-20, 20, 60)
+# predict analytic solution
+
+prediction = []
+
+T = pi/BIG_OMEGA
+
+for DELTA in DELTAS:
+    amp_factor = 1/(1+(DELTA/BIG_OMEGA)**2)
+    time_factor = sqrt(1+(DELTA/BIG_OMEGA)**2) # YES I DID IT
+    prediction.append(amp_factor*(sin(2*pi*time_factor*BIG_OMEGA/2*T))**2)
+axes.plot(DELTAS,prediction,lw=2)
+
+axes.margins(0,0.1)
+plt.show()
+
+

@@ -15,7 +15,7 @@ def U(t,Omega,w0,w):
             -1j*((w-w0)/(2*h)) * np.matrix([[sin(h*t),0],[0,-sin(h*t)]]) 
 
 
-## rabi lineshape
+'''## rabi lineshape
 w0 = 2*pi*177
 T = 0.1
 Omega = pi/T
@@ -34,7 +34,7 @@ ax.plot(frequencies/(2*pi),bz,'x',lw=2,label=r"$\rho_{00}$")
 ax.set_ylabel(r"$\rho_{00}$")
 ax.set_xlabel(r"$\omega/2\pi$")
 ax.margins(0,0.1)
-plt.show()
+plt.show()'''
 
 
 
@@ -48,7 +48,7 @@ t = np.linspace(0,T,50)
 fig = plt.figure()
 ax = p3.Axes3D(fig)
 
-ANIM_RANGE = 100
+ANIM_RANGE = 30 * 6
 
 ax.set_xlabel("$b_x$")
 ax.set_ylabel("$b_y$")
@@ -78,7 +78,7 @@ def animate(i):
     ax.set_ylim3d(-1,1)
     ax.set_zlim3d(-1,1)
 
-    w = w0-ANIM_RANGE+i/4
+    w = w0-ANIM_RANGE+i
     
     north_blob, = ax.plot3D([0],[0],[1],'ro')
     south_blob, = ax.plot3D([0],[0],[-1],'go')
@@ -90,7 +90,7 @@ def animate(i):
     bz = np.abs(ve)**2 - np.abs(vg)**2
 
     line, = ax.plot3D(bx,by,bz)
-    terminal, = ax.plot3D([bx[-1]],[by[-1]],[bz[-1]])
+    terminal, = ax.plot3D([bx[-1]],[by[-1]],[bz[-1]], 'bo')
 
     bruh1.append(w)
     bruh2.append(bz[-1])
@@ -98,20 +98,44 @@ def animate(i):
 
     mag = sqrt((Omega)**2 + (w0-w)**2)
 
-    h_arrow, = ax.plot3D([0, Omega/mag], [0, 0], [0, (w0-w)/mag], 'bo')
+    h_arrow, = ax.plot3D([0, Omega/mag], [0, 0], [0, (w0-w)/mag])
 
     return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,)
 
 ani = animation.FuncAnimation(fig, animate, init_func=init, 
-                                frames=8*ANIM_RANGE, interval=1, blit=True)
+                                frames=2*ANIM_RANGE, interval=1, blit=True)
 
 plt.show()
 
 
 fig, ax = plt.subplots()
-ax.plot(np.array(bruh1)/(2*pi),bruh2,'x',lw=2,label=r"$\rho_{00}$")
-ax.plot(np.array(bruh1)/(2*pi),bruh2,'x',lw=2,label=r"$\rho_{00}$")
+ax.plot(np.array(bruh1)/(2*pi),bruh2,'x',label=r"$\rho_{00}$")
+ax.plot(np.array(bruh1)/(2*pi),bruh3,'o',label=r"$\rho_{00}$")
+
+# peak is 1/(1+(delta/omega)^2)
+# periodicity is sqrt(1+(DELTA/BIG_OMEGA)**2)
+
 ax.set_ylabel(r"$\rho_{00}$")
 ax.set_xlabel(r"$\omega/2\pi$")
 ax.margins(0,0.1)
+plt.show()
+
+fig, axes = plt.subplots(nrows=1)
+RANGE = 30
+DELTAS = np.linspace(-RANGE*6, RANGE*6, 70)
+# predict analytic solution
+
+prediction = []
+
+T = 0.1
+BIG_OMEGA = pi/T
+
+
+for DELTA in DELTAS:
+    amp_factor = 1/(1+(DELTA/BIG_OMEGA)**2)
+    time_factor = sqrt(1+(DELTA/BIG_OMEGA)**2) # YES I DID IT
+    prediction.append(amp_factor*(sin(time_factor*BIG_OMEGA/2*T))**2)
+axes.plot(DELTAS/6,prediction,lw=2)
+
+axes.margins(0,0.1)
 plt.show()
