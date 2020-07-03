@@ -2,7 +2,6 @@ import numpy as np
 from numpy import pi,sin,cos,tan,sqrt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import mpl_toolkits.mplot3d.axes3d as p3
 
 ANIM_RANGE = 30 * 6
 # Range of frequencies we want. multiplying by 6 is so that we multiply by roughly 2 pi to turn into angular frequency.
@@ -21,8 +20,9 @@ def U(t,Omega,w0,w):
 
 t = np.linspace(0,T,50) # set of all times being used for evaluation of the bloch vector's trajectory
 
-fig = plt.figure()
-ax = p3.Axes3D(fig)
+fig = plt.figure(figsize=plt.figaspect(0.4))
+
+ax = fig.add_subplot(121, projection='3d')
 
 ax.set_xlim3d([-1.0, 1.0])
 ax.set_ylim3d([-1.0, 1.0])
@@ -41,9 +41,27 @@ north_blob, = ax.plot3D([0],[0],[1],'ro')
 south_blob, = ax.plot3D([0],[0],[-1],'go')
 h_arrow, = ax.plot3D([], [], [], label="h vector")
 
+ax.set_title("Bloch Sphere Trajectory vs Delta")
+ax.legend()
+
+
+ax2 = fig.add_subplot(122)
+
+ax2.set_xlabel(r"$\omega/2\pi$")
+
 recorded_delta = [] # recorded frequencies during animation
 recorded_bz_final = [] # recorded bz(T) during animation
 recorded_bz_max = [] # recorded max(bz) during animation
+
+bruh1, = ax2.plot([],[],'x',label="$b_z(T)$")
+bruh2, = ax2.plot([],[],'o',label="$max({b_z(t)})$")
+
+ax2.grid = True
+ax2.margins(0,0.1)
+ax2.set_title("$Recorded\ b_z(T)\ vs\ max({b_z(t)})$")
+ax2.legend()
+
+
 
 def animate(i):
     w = w0-ANIM_RANGE+i # driving frequency
@@ -67,24 +85,16 @@ def animate(i):
 
     mag = sqrt((Omega)**2 + (w0-w)**2)
 
-    h_arrow.set_data([0, Omega], [0, 0])
-    h_arrow.set_3d_properties([0, (w0-w)])
+    h_arrow.set_data([0, Omega/mag], [0, 0])
+    h_arrow.set_3d_properties([0, (w0-w)/mag])
 
-    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,)
+    bruh1.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_final)
+    bruh2.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_max)
+
+    print(bruh1)
+
+    return (bruh2,) + (bruh1,) + (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,)
 
 ani = animation.FuncAnimation(fig, animate,
-                                frames=2*ANIM_RANGE, interval=1, blit=True)
-plt.title("Bloch Sphere Trajectory vs Delta")
-plt.legend()
-plt.show()
-
-
-fig, ax = plt.subplots()
-ax.plot(np.array(recorded_delta)/(2*pi),recorded_bz_final,'x',label="$b_z(T)$")
-ax.plot(np.array(recorded_delta)/(2*pi),recorded_bz_max,'o',label="$max({b_z(t)})$")
-# peak is 1/(1+(delta/omega)^2)
-# periodicity is sqrt(1+(DELTA/BIG_OMEGA)**2)
-ax.set_xlabel(r"$\omega/2\pi$")
-plt.title("$Recorded\ b_z(T)\ vs\ max({b_z(t)})$")
-plt.legend()
+                                frames=2*ANIM_RANGE, interval=5, blit=True)
 plt.show()
