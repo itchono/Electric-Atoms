@@ -13,6 +13,32 @@ def U(t,Omega,w0,w):
     return np.matrix([[cos(h*t),0],[0,cos(h*t)]]) + \
             -1j*(Omega/(2*h)) * np.matrix([[0,sin(h*t)],[sin(h*t),0]]) + \
             -1j*((w-w0)/(2*h)) * np.matrix([[sin(h*t),0],[0,-sin(h*t)]]) 
+
+
+## rabi lineshape
+w0 = 2*pi*177
+T = 0.1
+Omega = pi/T
+frequencies = 2*pi*np.linspace(157,197,300)
+rhos = []
+t = np.linspace(0,T,1000)
+r_init = np.array([1,0,0])
+
+vg = np.array([U(T,Omega,w0,w)[0,0] for w in frequencies])
+ve = np.array([U(T,Omega,w0,w)[1,0] for w in frequencies])
+
+bz = np.abs(ve)**2 - np.abs(vg)**2
+
+fig, ax = plt.subplots()
+ax.plot(frequencies/(2*pi),bz,'x',lw=2,label=r"$\rho_{00}$")
+ax.set_ylabel(r"$\rho_{00}$")
+ax.set_xlabel(r"$\omega/2\pi$")
+ax.margins(0,0.1)
+plt.show()
+
+
+
+
 # solution
 w0 = 2*pi*177
 T = 0.1
@@ -22,7 +48,7 @@ t = np.linspace(0,T,50)
 fig = plt.figure()
 ax = p3.Axes3D(fig)
 
-ANIM_RANGE = 30
+ANIM_RANGE = 100
 
 ax.set_xlabel("$b_x$")
 ax.set_ylabel("$b_y$")
@@ -42,31 +68,50 @@ def init():
 
     return (north_blob,) + (south_blob,)
 
+bruh1 = []
+bruh2 = []
+bruh3 = []
+
 def animate(i):
+    ax.clear()
     ax.set_xlim3d(-1,1)
     ax.set_ylim3d(-1,1)
     ax.set_zlim3d(-1,1)
+
+    w = w0-ANIM_RANGE+i/4
     
     north_blob, = ax.plot3D([0],[0],[1],'ro')
     south_blob, = ax.plot3D([0],[0],[-1],'go')
-    vg = np.array([U(ti,Omega,w0,w0-ANIM_RANGE+i)[0,0] for ti in t])
-    ve = np.array([U(ti,Omega,w0,w0-ANIM_RANGE+i)[1,0] for ti in t])
+    vg = np.array([U(ti,Omega,w0,w)[0,0] for ti in t])
+    ve = np.array([U(ti,Omega,w0,w)[1,0] for ti in t])
 
     bx = 2*(ve*vg.conjugate()).real
     by = 2*(ve*vg.conjugate()).imag
     bz = np.abs(ve)**2 - np.abs(vg)**2
 
-    line, = ax.plot3D(bx,by,bz,lw=2,c=[i/(2*ANIM_RANGE), 1-i/(2*ANIM_RANGE), 1-i/(2*ANIM_RANGE)])
+    line, = ax.plot3D(bx,by,bz)
+    terminal, = ax.plot3D([bx[-1]],[by[-1]],[bz[-1]])
 
-    print(bz[-1])
+    bruh1.append(w)
+    bruh2.append(bz[-1])
+    bruh3.append(max(bz))
 
-    mag = sqrt((Omega)**2 + (ANIM_RANGE-i)**2)
+    mag = sqrt((Omega)**2 + (w0-w)**2)
 
-    h_arrow, = ax.plot3D([0, Omega/mag], [0, 0], [0, (ANIM_RANGE-i)/mag], lw=2,c=[i/(2*ANIM_RANGE), 1-i/(2*ANIM_RANGE), 1-i/(2*ANIM_RANGE)])
+    h_arrow, = ax.plot3D([0, Omega/mag], [0, 0], [0, (w0-w)/mag], 'bo')
 
-    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,)
+    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,)
 
 ani = animation.FuncAnimation(fig, animate, init_func=init, 
-                                frames=2*ANIM_RANGE, interval=1, blit=True)
+                                frames=8*ANIM_RANGE, interval=1, blit=True)
 
+plt.show()
+
+
+fig, ax = plt.subplots()
+ax.plot(np.array(bruh1)/(2*pi),bruh2,'x',lw=2,label=r"$\rho_{00}$")
+ax.plot(np.array(bruh1)/(2*pi),bruh2,'x',lw=2,label=r"$\rho_{00}$")
+ax.set_ylabel(r"$\rho_{00}$")
+ax.set_xlabel(r"$\omega/2\pi$")
+ax.margins(0,0.1)
 plt.show()
