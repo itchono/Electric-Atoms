@@ -1,13 +1,11 @@
 import numpy as np
-from scipy import linalg as lg
 from numpy import pi,sin,cos,tan,sqrt
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from scipy.integrate import odeint
 import matplotlib.animation as animation
 import mpl_toolkits.mplot3d.axes3d as p3
 
-## analytic solution (with RWA)
+# Rotating Wave Approximation; Unitary Transformation Matrix for system at time T
 def U(t,Omega,w0,w):
     h = np.sqrt(Omega**2 + (w-w0)**2)/2
     return np.matrix([[cos(h*t),0],[0,cos(h*t)]]) + \
@@ -15,34 +13,9 @@ def U(t,Omega,w0,w):
             -1j*((w-w0)/(2*h)) * np.matrix([[sin(h*t),0],[0,-sin(h*t)]]) 
 
 
-'''## rabi lineshape
 w0 = 2*pi*177
 T = 0.1
-Omega = pi/T
-frequencies = 2*pi*np.linspace(157,197,300)
-rhos = []
-t = np.linspace(0,T,1000)
-r_init = np.array([1,0,0])
-
-vg = np.array([U(T,Omega,w0,w)[0,0] for w in frequencies])
-ve = np.array([U(T,Omega,w0,w)[1,0] for w in frequencies])
-
-bz = np.abs(ve)**2 - np.abs(vg)**2
-
-fig, ax = plt.subplots()
-ax.plot(frequencies/(2*pi),bz,'x',lw=2,label=r"$\rho_{00}$")
-ax.set_ylabel(r"$\rho_{00}$")
-ax.set_xlabel(r"$\omega/2\pi$")
-ax.margins(0,0.1)
-plt.show()'''
-
-
-
-
-# solution
-w0 = 2*pi*177
-T = 0.1
-Omega = pi/T
+Omega = pi/2/T
 t = np.linspace(0,T,50)
 
 fig = plt.figure()
