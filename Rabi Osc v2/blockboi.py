@@ -38,11 +38,10 @@ line, = ax.plot3D([],[],[], label = "$b_z(t)$ (trajectory)")
 terminal, = ax.plot3D([],[],[], 'bo', label = "$b_z(T)$ (final)")
 north_blob, = ax.plot3D([0],[0],[1],'ro')
 south_blob, = ax.plot3D([0],[0],[-1],'go')
-h_arrow, = ax.plot3D([], [], [], label="h vector")
+h_arrow, = ax.plot3D([], [], [], label="$2h = \Omega*x + \Delta*z$", linewidth=2)
 
-ax.set_title("Bloch Sphere Trajectory vs Delta")
+ax.set_title("Bloch Sphere")
 ax.legend()
-
 
 ax2 = fig.add_subplot(121)
 
@@ -52,8 +51,8 @@ recorded_delta = [] # recorded frequencies during animation
 recorded_bz_final = [] # recorded bz(T) during animation
 recorded_bz_max = [] # recorded max(bz) during animation
 
-bruh1, = ax2.plot([0],[0],'-',label="$b_z(T)$")
-bruh2, = ax2.plot([0],[0],'-',label="$max({b_z(t)})$")
+bzarr, = ax2.plot([0],[0],'-',label="$b_z(T)$")
+bzmaxarr, = ax2.plot([0],[0],'-',label="$max({b_z(t)})$")
 
 ax2.set_xlim([(w0-RANGE)/(2*pi), (w0+RANGE)/(2*pi)])
 ax2.set_ylim([-1, 1])
@@ -65,7 +64,10 @@ ax2.legend()
 
 
 def animate(i):
-    w = w0 - RANGE + i
+    '''
+    Update the animation
+    '''
+    w = w0 - RANGE + i # set the new driving frequency
 
     arr = [U(ti,Omega,w0,w) for ti in t]
 
@@ -87,15 +89,13 @@ def animate(i):
         recorded_bz_final.append(bz[-1])
         recorded_bz_max.append(max(bz))
 
-    mag = sqrt((Omega)**2 + (w0-w)**2)
+    h_arrow.set_data([0, Omega/RANGE], [0, 0])
+    h_arrow.set_3d_properties([0, (w0-w)/(RANGE)])
 
-    h_arrow.set_data([0, Omega/mag], [0, 0])
-    h_arrow.set_3d_properties([0, (w0-w)/mag])
+    bzarr.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_final)
+    bzmaxarr.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_max)
 
-    bruh1.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_final)
-    bruh2.set_data(np.array(recorded_delta)/(2*pi),recorded_bz_max)
-
-    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,) + (bruh2,) + (bruh1,)
+    return (line,) + (h_arrow,) + (north_blob,) + (south_blob,) + (terminal,) + (bzmaxarr,) + (bzarr,)
 
 ani = animation.FuncAnimation(fig, animate,frames=2*RANGE, interval=1, blit=True)
 # set blit to False if you want to rotate the plot (warning: slow)
