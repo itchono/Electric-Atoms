@@ -34,13 +34,13 @@ ax.text(0,0,1.2,r"$|1\rangle$")
 ax.text(0,0,-1.2,r"$|0\rangle$")
 # label ground and excited states
 
-line, = ax.plot3D([],[],[], label = "$b_z(t)$ (trajectory)")
-terminal, = ax.plot3D([],[],[], 'bo', label = "$b_z(T)$ (final)")
+line, = ax.plot3D([],[],[], label = "$b(t)$ (trajectory)")
+terminal, = ax.plot3D([],[],[], 'bo', label = "$b(T)$ (final)")
 north_blob, = ax.plot3D([0],[0],[1],'ro')
 south_blob, = ax.plot3D([0],[0],[-1],'go')
 h_arrow, = ax.plot3D([], [], [], label="$2h = \Omega*x + \Delta*z$", linewidth=2)
 
-ax.set_title("Bloch Sphere")
+ax.set_title("Bloch Sphere", loc="left")
 ax.legend()
 
 ax2 = fig.add_subplot(121)
