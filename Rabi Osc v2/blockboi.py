@@ -8,7 +8,7 @@ RANGE = 50 * 6
 
 w0 = 2*pi*177 # transition energy for m = 0 2s hyperfine transition in hydrogen
 T = 0.1
-Omega = pi/T
+Omega = pi/T # PI pulse; change to other durations for cool effects.
 
 # Rotating Wave Approximation; Unitary Transformation Matrix for system at time T
 def U(t,Omega,w0,w):
@@ -26,13 +26,13 @@ ax = fig.add_subplot(122, projection='3d')
 ax.set_xlim3d([-1.0, 1.0])
 ax.set_ylim3d([-1.0, 1.0])
 ax.set_zlim3d([-1.0, 1.0])
-
 ax.set_xlabel("$b_x$")
 ax.set_ylabel("$b_y$")
 ax.set_zlabel("$b_z$")
 
 ax.text(0,0,1.2,r"$|1\rangle$")
 ax.text(0,0,-1.2,r"$|0\rangle$")
+# label ground and excited states
 
 line, = ax.plot3D([],[],[], label = "$b_z(t)$ (trajectory)")
 terminal, = ax.plot3D([],[],[], 'bo', label = "$b_z(T)$ (final)")
@@ -44,7 +44,6 @@ ax.set_title("Bloch Sphere")
 ax.legend()
 
 ax2 = fig.add_subplot(121)
-
 ax2.set_xlabel(r"$\omega/2\pi$")
 
 recorded_delta = [] # recorded frequencies during animation
@@ -57,11 +56,9 @@ bzmaxarr, = ax2.plot([0],[0],'-',label="$max({b_z(t)})$")
 ax2.set_xlim([(w0-RANGE)/(2*pi), (w0+RANGE)/(2*pi)])
 ax2.set_ylim([-1, 1])
 
-ax2.grid = True
 ax2.margins(0,0.1)
 ax2.set_title("$Recorded\ b_z(T)\ vs\ max({b_z(t)})$")
 ax2.legend()
-
 
 def animate(i):
     '''
@@ -77,6 +74,7 @@ def animate(i):
     bx = 2*(ve*vg.conjugate()).real
     by = 2*(ve*vg.conjugate()).imag
     bz = np.abs(ve)**2 - np.abs(vg)**2
+    # evaluate bloch vector components over time
 
     line.set_data(bx,by)
     line.set_3d_properties(bz)
