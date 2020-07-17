@@ -6,10 +6,12 @@
 import numpy as np
 
 
+
+
 # np.loadtxt(fname)
 
-STATE = np.array((200000,50,70,0,0,)) # Tester State; remove in final
-STATE2 = np.array((100000,-30,40,0,0)) # Tester State; remove in final
+STATE = np.array((200000,50,70,0,0)) # Tester State; remove in final
+STATE2 = np.array((100000,0,0,0.24,-0.1)) # Tester State; remove in final
 
 def filter(particles, aperture_diameter = 0.5, axial_length = 30):
     '''
@@ -27,12 +29,11 @@ def filter(particles, aperture_diameter = 0.5, axial_length = 30):
     z = z0 + vz * T # get final Z at time T
     y = y0 + vy * T # get final Y at time T
 
-    Zmask = np.nonzero(np.abs(z) < radius) # indices where Z is okay
-    Ymask = np.nonzero(np.abs(y) < radius) # indices where Y is okay
+    mask = np.nonzero(np.sqrt(z**2 + y**2) < radius) # indices where z and y are inside the aperture radius
 
-    return particles[np.intersect1d(Zmask, Ymask)] # takes indices where both Y and Z are okay
+    return particles[mask] # takes indices where both Y and Z are okay
 
-print(filter(np.array([STATE, STATE2])))
+print("Filtered Particle Arrays\n", filter(np.array([STATE, STATE2])))
     
 def positions(particles, axial_length = 30, num_steps = 500):
     '''
@@ -57,4 +58,4 @@ def positions(particles, axial_length = 30, num_steps = 500):
 
     return np.transpose(np.array((x, y, z)), [2, 0, 1])
 
-print(positions(np.array([STATE, STATE2]), num_steps=4))
+print("Positions over time\n", positions(np.array([STATE, STATE2]), num_steps=4))
