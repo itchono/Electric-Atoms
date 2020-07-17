@@ -46,7 +46,7 @@ def positions(particles, axial_length = 30, num_steps = 500):
     '''
     vx, vy, vz, y0, z0  = particles.T # unpack each particle
 
-    T = axial_length / min(vx) # get Time taken to traverse the x distance, on the SLOWEST particle
+    T = axial_length / np.amin(vx) # get Time taken to traverse the x distance, on the SLOWEST particle
 
     times = np.tile(np.linspace(0, T, num=num_steps), (particles.shape[0], 1)).T # make range of times, and stack them up to work on the array
 
