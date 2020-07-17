@@ -8,7 +8,8 @@ import numpy as np
 
 # np.loadtxt(fname)
 
-STATE = np.array((0,0,0,0,200000)) # Tester State; remove in final
+STATE = np.array((50,70,0,0,200000)) # Tester State; remove in final
+STATE2 = np.array((-30,40,0,0,100000)) # Tester State; remove in final
 
 def filter(particles, aperture_diameter = 0.5, axial_length = 30):
     '''
@@ -18,24 +19,21 @@ def filter(particles, aperture_diameter = 0.5, axial_length = 30):
     aperture_diameter: diameter of terminal aperture, in cm
     axial_length: distance that particles must travel in x direction to reach aperture
     '''
-    radius = aperture_diameter / 2
+    radius = aperture_diameter / 2 # convert diameter to radius
 
-    vz, vy, z, y, vx = particles.T
+    vz, vy, z, y, vx = particles.T # unpack each particle
 
-    T = axial_length / particles[:,4] # get Times taken to traverse the x distance
-    Z = particles[:,2] + particles[:,0] * T # get final Z at time T
-    Y = particles[:,3] + particles[:,1] * T # get final Y at time T
+    T = axial_length / vx # get Times taken to traverse the x distance
+    Z = z + vz * T # get final Z at time T
+    Y = y + vy * T # get final Y at time T
 
     Zmask = np.nonzero(np.abs(Z) < radius) # indices where Z is okay
     Ymask = np.nonzero(np.abs(Y) < radius) # indices where Y is okay
-    mask = np.intersect1d(Zmask, Ymask)
 
-    return particles[mask]
+    return particles[np.intersect1d(Zmask, Ymask)] # takes indices where both Y and Z are okay
 
-print(filter([STATE]*5))
+print(filter(np.array([STATE]*5)))
     
-
-
 def positions(particles, axial_length = 30, num_steps = 500):
     '''
     Gets the position over time functions of particles
@@ -45,10 +43,19 @@ def positions(particles, axial_length = 30, num_steps = 500):
     num_steps: number of desired timesteps for position
     '''
 
-    T = axial_length / particles[:,4] # get Times taken to traverse the x distance
+    vz, vy, z, y, vx = particles.T # unpack each particle
+
+    T = axial_length / vx # get Times taken to traverse the x distance
 
     times = np.linspace(0, T, num=num_steps)
 
-    X = particles[:,4] * times
+    X = vx * times
+    Y = y + vy * times
+    Z = z + vz * times
+    # apply newton's law
 
-    
+    print("hello", X)
+
+    #return np.array([X, Y, Z])
+
+print(positions(np.array([STATE]*2), num_steps=10))
