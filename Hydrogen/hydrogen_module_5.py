@@ -1,52 +1,102 @@
 # Hydrogen 5
-# Hamiltonian Propagator
+# Hamiltonian Generator
 
 import numpy as np
-from scipy import linalg as lg
-from numpy import pi,sin,cos,tan,sqrt
-import matplotlib.pyplot as plt
-from scipy.integrate import odeint
+from numpy import pi,cos,sin
+import scipy.linalg as lg
+from scipy.constants import e,c,h,hbar,u,m_e,epsilon_0
+muB = 2*pi* e*hbar/(2*m_e)/(h*1e10)                     # 2pi* MHz/G
+ea0 = 2*pi* 4*pi*epsilon_0*hbar**2/(e * m_e)/(h*1e4)    # 2pi* MHz/(V/cm)
+from sympy.physics.wigner import wigner_3j,wigner_6j
+import copy
+## atomic functions
+# hbar = 1
+# All energies in 2*pi*MHz
+# All times in us
+# Electric fields in V/cm
+class AtomicState():
+    def __init__(self,energy=0,L=0,J=1/2,F=0):
+        self.energy = energy       
+        self.S = 1/2    # Intrinsic angular momentum of electron
+        self.I = 1/2	# Intrinsic angular momentum of the hydrogen nucleus
+        self.L = L      # Orbital angular momentum of electron
+        self.J = J      # Total angular momentum of electron
+        self.F = F
+        self.mF = F
+        self.P = (-1)**self.L      # parity
+
+    def __repr__(self):
+        attribs = [str(s) for s in [self.S,self.L,self.J]]
+        string = ','.join(attribs)
+
+        return f"|L = {self.L}, J = {self.J}; F,mF = {self.F},{self.mF}>"
+
+def sublevel_expand(basis):
+    # makes all the m_F sublevels given one stretched (mF = F) level
+    newbasis = []
+    for ket in basis:
+        for mF in np.arange(-ket.F,ket.F+1,1):
+            newket = copy.deepcopy(ket)
+            newket.mF = mF				
+            newbasis.append(newket)
+    return newbasis
+
+## Definition of dipole matrix elements & reduced matrix elements
+def delta(i,j): return (i==j)*1.0
+
+def M1_moment(A,B,q=0):
+    """M1 matrix element: <A|mu|B>
+        Units are mu_B """
+    if (A.P*B.P == +1):	# check to see if the two states have same parity
+        return (-1)**(A.F-A.mF) * wigner_3j(A.F,1,B.F,-A.mF,q,B.mF) * M1_reduced_F(A,B)
+    else: return 0
+
+def M1_reduced_F(A,B,gI=1.521032e-3):
+    """F-reduced matrix element <F|| mu ||F'>"""
+    # WOAH NOTE: what is this?
+    # Proton magnetic moment, gI = 0.001521032 Bohr magnetons
+    return np.sqrt((2*A.F+1)*(2*B.F+1)) * ( (-1)**(A.J+A.I+B.F+1) * delta(A.I,B.I) * wigner_6j(A.F,1,B.F,B.J,A.I,A.J) * M1_reduced_J(A,B)  + (-1)**(B.J+B.I+A.F+1) * delta(A.J,B.J) * wigner_6j(A.F,1,B.F,B.I,A.J,A.I) * gI * np.sqrt(A.I*(A.I+1)*(2*A.I+1)) )
+
+def M1_reduced_J(A,B,gL=-0.9995,gS=-2.0023193):
+    """J-reduced matrix element <J|| mu ||J'>"""
+    if (A.L==B.L) and (A.S==B.S):
+        return np.sqrt((2*A.J+1)*(2*B.J+1)) * ( (-1)**(A.L+A.S+B.J+1) * wigner_6j(A.J,1,B.J,B.L,A.S,A.L) * gL * np.sqrt(A.L*(A.L+1)*(2*A.L+1)) + (-1)**(B.L+B.S+A.J+1) * wigner_6j(A.J,1,B.J,B.S,A.L,A.S) * gS * np.sqrt(A.S*(A.S+1)*(2*A.S+1)) ) 
+    else: return 0
+
+    
+############# Atomic data ################################
+# 2S_1/2 states
+
+# SELF NOTE: 2pi*(59.2+909.872) MHz is the distance between 2p1/2 F = 0 and 2s1/2 F = 0
+
+ground_state = AtomicState(energy=0,L=0,J=1/2,F=0)
+excited_state = AtomicState(energy=0,L=0,J=1/2,F=1) # Remember: tau is in microseconds --> 0.13 seconds
+
+# FIRST STEP: define our basis
+basis = sublevel_expand([ground_state, excited_state])
+
+N = len(basis)
+
+# STEP 2: Steady State Hamiltonian
+H0 = np.matrix(np.diag([b.energy for b in basis]))
 
 
-# units in MHz
-TRANSITON_FREQUENCY = 177
-BIG_OMEGA = 1
-
-# BIG OMEGA IS NOT RABI FREQUENCY
-
-
-## density matrix (much faster)
-def equation_system(r,t,Omega,w0,w):
-    rho_00, rho_01_r, rho_01_i = r
-
-    rhodot_00 = -2*rho_01_i * Omega*cos(w*t)
-
-    rhodot_01_r = -w0*rho_01_i
-
-    rhodot_01_i = +w0*rho_01_r + (2*rho_00 - 1) * Omega*cos(w*t)
-
-    return rhodot_00, rhodot_01_r, rhodot_01_i
+## Operator matrices 
+Mz = np.matrix(np.zeros((N,N)))
+Mplus = np.matrix(np.zeros((N,N)))
+Mminus = np.matrix(np.zeros((N,N)))
 
 
-# solution
-t = np.linspace(0,1/BIG_OMEGA,1000) # time units in terms of microseconds
+for i in range(N):
+    for j in range(N):		
+        mz = M1_moment(basis[i],basis[j],q=0)
+        mplus = M1_moment(basis[i],basis[j],q=+1)
+        mminus = M1_moment(basis[i],basis[j],q=-1)	
+        Mz[i,j],Mplus[i,j],Mminus[i,j] = mz,mplus,mminus
+Mx = (Mminus - Mplus)/np.sqrt(2)
+My = (Mminus + Mplus)/(1j*np.sqrt(2))
 
-r_init = np.array([1,0,0]) # initial starting state of the DEs
-
-
-w,w0 = 2*pi*TRANSITON_FREQUENCY,2*pi*177 # forced oscillation frequency vs energy level frequency
-Omega = 2*pi*BIG_OMEGA
-
-
-solution = odeint(equation_system, r_init, t, args=(Omega,w,w0))
-
-rho_00 = solution[:,0]
-
-rho_11 = 1-rho_00
-
-maxp = max(rho_00)
-
-
-fig, axes = plt.subplots(nrows=1)
-axes.plot(t,rho_11,lw=2,label=r"$\rho_{11}$",color='C0')
-axes.set_ylabel(r"$\rho_{11}$",color='C0')
+# testing
+print("Mz", Mz)
+print("Mx", Mx)
+print("My", My)
