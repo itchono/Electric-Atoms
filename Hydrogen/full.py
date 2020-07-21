@@ -26,11 +26,6 @@ def particleGenerator(NUM_POINTS):
 def getParticles():
     return np.loadtxt('particles.txt')
 
-
-
-
-
-
 def filter(particles, aperture_diameter = 0.005, axial_length = 0.30):
     '''
     Filters out particles that would not reach the aperture and returns the ones which DO.
@@ -47,17 +42,14 @@ def filter(particles, aperture_diameter = 0.005, axial_length = 0.30):
     z = z0 + vz * T # get final Z at time T
     y = y0 + vy * T # get final Y at time T
 
-    print("z", z[np.abs(z) < 0.005])
-    print("y", y[np.abs(y) < 0.005])
 
-    mask = np.nonzero(np.sqrt(z**2 + y**2) < radius**2) # indices where z and y are inside the aperture radius
+    mask = np.nonzero(np.sqrt(z**2 + y**2) < radius) # indices where z and y are inside the aperture radius
+
+    print(f"{len(mask[0])} of {len(particles)} made it through ({len(mask[0])/len(particles) * 100}%)")
     
     return particles[mask] # takes indices where both Y and Z are okay
 
 
-
-
-    
 def positionOverTime(particles, axial_length = 0.30, num_steps = 500):
     '''
     Gets the position over time functions of particles.
@@ -161,7 +153,7 @@ def getB_z_t(path, B_y):
 
 
 
-NUM_POINTS= int(100)
+NUM_POINTS= int(10000)
 
 
 particleGenerator(NUM_POINTS)
@@ -170,7 +162,6 @@ particles = getParticles()
 #print(particles)
 
 filteredParticles = filter(particles)
-print(filteredParticles)
 
 trajectories = positionOverTime(filteredParticles,num_steps=500)
 #print(trajectories)
