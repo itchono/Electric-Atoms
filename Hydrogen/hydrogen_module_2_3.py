@@ -29,7 +29,7 @@ def filter(particles, aperture_diameter = 0.5, axial_length = 30):
     z = z0 + vz * T # get final Z at time T
     y = y0 + vy * T # get final Y at time T
 
-    mask = np.nonzero(np.sqrt(z**2 + y**2) < radius) # indices where z and y are inside the aperture radius
+    mask = np.nonzero(np.sqrt(z**2 + y**2) < radius**2) # indices where z and y are inside the aperture radius
 
     return particles[mask] # takes indices where both Y and Z are okay
 
