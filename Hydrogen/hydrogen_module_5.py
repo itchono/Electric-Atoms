@@ -10,17 +10,31 @@ ea0 = 2*pi* 4*pi*epsilon_0*hbar**2/(e * m_e)/(h*1e4)    # 2pi* MHz/(V/cm)
 from sympy.physics.wigner import wigner_3j,wigner_6j
 import copy
 
+def process_H(b_fields, Mx, My, Mz):
+    '''
+    Produces H(t) for a full set of N atoms, given an input B(t), with T timesteps
 
-def Hamiltonian(b_fields, configuration_name):
+    H(t) is a N x T x 4 x 4 matrix (can be reconfigured)
+    B(t) is a N x T x 3 array
+    '''
+
+    H = np.zeros((b_fields.shape[0], b_fields.shape[1], 4, 4)).astype(complex)
+
+    for i in range(b_fields.shape[0]):
+        H[i,:,:,:] = Hamiltonian(b_fields[i,:,:], Mx, My, Mz)
+
+    return H
+
+def Hamiltonian(b_fields, Mx, My, Mz):
     '''
     Produces H(t), given an input B(t), with T timesteps
 
     H(t) is a T x 4 x 4 matrix (can be reconfigured)
     B(t) is a T x 3 array
+
+    Mx, My, Mz are 4 x 4 matrices pre-generated.
     '''
     H = np.zeros((b_fields.shape[0], 4, 4)).astype(complex)
-
-    Mx, My, Mz = load_mu_matrices(configuration_name)
 
     for i in range(b_fields.shape[0]):
         H[i,:,:] = -(b_fields[i, 0] * Mx + b_fields[i, 1] * My + b_fields[i,2] * Mz)
@@ -145,6 +159,6 @@ save_mu_matrices("hydrogen_matrix")
 
 b = np.array([[1,2,3], [4,5,6]])
 
-H = Hamiltonian(b, "hydrogen_matrix")
+H = Hamiltonian(b, *load_mu_matrices("hydrogen_matrix"))
 
 print(H)

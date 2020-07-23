@@ -3,12 +3,16 @@ import pickle
 import time
 from scipy.interpolate import NearestNDInterpolator
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
+import cProfile
 
 
 def particleGenerator(NUM_POINTS):
     mu_vel_yz, sigma_vel_yz = 0, 200 # in m/s
     mu_vel_x, sigma_vel_x = 2000, 1000 # m/s
-    minimum, maximum = -1e-4, 1e-4
+    minimum, maximum = -1e-3, 1e-3
     #Velocity Generation:
 
     v_z = np.random.normal(mu_vel_yz,sigma_vel_yz,NUM_POINTS)
@@ -73,122 +77,79 @@ def positionOverTime(particles, axial_length = 0.30, num_steps = 500):
 
     return np.transpose(np.array((x, y, z)), [2, 0, 1])
 
-def oracleFunctionGenerator():
 
-    startTime = time.perf_counter()
-    x, y, z, HxRe, HxIm, HyRe, HyIm, HzRe, HzIm = np.loadtxt('HField.txt', skiprows = 2, unpack = True)
-    endTime = time.perf_counter()
+def profiler():
+    NUM_POINTS= int(20000)
+    particleGenerator(NUM_POINTS)
 
-    print("Loading Time: ", str(endTime-startTime))
+    particles = getParticles()
+    #print(particles)
 
-    startTime = time.perf_counter()
+    vx, vy, vz, y0, z0  = particles.T # unpack each particle
 
-
-
-    H_x = NearestNDInterpolator((x,y,z),HxRe,"QJ")
-    pickle.dump(H_x,open("H_x.function","wb"))
-
-
-    H_y = NearestNDInterpolator((x,y,z),HyRe)
-    pickle.dump(H_y,open("H_y.function","wb"))
-
-    H_z = NearestNDInterpolator((x,y,z),HzRe)
-    pickle.dump(H_z,open("H_z.function","wb"))
-
-    endTime = time.perf_counter()
+    T = 0.3 / vx # get Times taken to traverse the x distance
+    z = z0 + vz * T # get final Z at time T
+    y = y0 + vy * T # get final Y at time T
 
 
-    print("Function Loading Time: ", str(endTime-startTime))
+    fig = plt.figure()
+    ax = fig.add_subplot(221)
+    ax.scatter(z, vz)
+    ax.set_xlabel("$z_{final}$ (mm)")
+    ax.set_ylabel("$v_z$ (m/s)")
 
-def getOracleFunctions():
-
-    H_x = pickle.load(open("H_x.function","rb"))
-    H_y = pickle.load(open("H_y.function","rb"))
-    H_z = pickle.load(open("H_z.function","rb"))
-    return H_x, H_y, H_z
-
-
-def getB_x_t(path, B_x):
-
-    x, y, z = path
-
-    sets = np.multiply(1000,np.array((x,y,z)).T) # convert units to mm
-
-    #print(sets)
-    B_x_t = B_x(sets)
-
-    endTime = time.perf_counter()
+    ax = fig.add_subplot(222)
+    ax.scatter(y, vy)
+    ax.set_xlabel("$y_{final} (mm)$")
+    ax.set_ylabel("$v_y$ (m/s)")
 
 
-    return B_x_t
+    filteredParticles = filter(particles)
+
+    vx, vy, vz, y0, z0  = filteredParticles.T # unpack each particle
+
+    T = 0.3 / vx # get Times taken to traverse the x distance
+    z = z0 + vz * T # get final Z at time T
+    y = y0 + vy * T # get final Y at time T
+
+    ax = fig.add_subplot(223)
+    ax.scatter(z, vz)
+    ax.set_xlabel("$z_{final}$ (mm)")
+    ax.set_ylabel("$v_z$ (m/s)")
+
+    ax = fig.add_subplot(224)
+    ax.scatter(y, vy)
+    ax.set_xlabel("$y_{final}$ (mm)")
+    ax.set_ylabel("$v_y$ (m/s)")
+
+    fig.tight_layout(pad=1.0)
 
 
-def getB_y_t(path, B_y):
+    trajectories = positionOverTime(filteredParticles)
+    fig2 = plt.figure()
+    ax = fig2.add_subplot(111, projection='3d')
 
-    x, y, z = path
+    circley = 2.5 * np.cos(np.linspace(0, 2*np.pi, 30))
+    circlez = 2.5 * np.sin(np.linspace(0, 2*np.pi, 30))
+    circlex = np.array([0.3]*30)
 
-    sets = np.multiply(1000,np.array((x,y,z)).T)
-
-    #print(sets)
-    B_y_t = B_y(sets)
+    ax.plot(circlex, circley, circlez)
     
-    endTime = time.perf_counter()
+    ax.set_xlim3d([0, 0.4])
+    ax.set_ylim3d([-4, 4])
+    ax.set_zlim3d([-4, 4])
+
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (mm)")
+    ax.set_zlabel("z (mm)")
+
+    for i in trajectories:
+        ax.plot(i[0,:], i[1,:]*1000, i[2,:]*1000, color="blue")
 
 
-    return B_y_t
-def getB_z_t(path, B_y):
-
-    x, y, z = path
-
-    sets = np.multiply(1000,np.array((x,y,z)).T)
-
-    #print(sets)
-    B_z_t = B_z(sets)
+    plt.show()
     
-    endTime = time.perf_counter()
-
-
-
-    return B_z_t
-
-
-
-NUM_POINTS= int(10000)
-
-
-particleGenerator(NUM_POINTS)
-
-particles = getParticles()
-#print(particles)
-
-filteredParticles = filter(particles)
-
-trajectories = positionOverTime(filteredParticles,num_steps=500)
-#print(trajectories)
-particle0Trajectory = trajectories[0]
-
-#oracleFunctionGenerator()
-
-
-
-
-H_x, H_y, H_z = getOracleFunctions()
-
-for traj in trajectories:
-    B_x_t = getB_x_t(traj,H_x)
-    B_y_t = getB_y_t(traj,H_y)
-    B_z_t = getB_y_t(traj,H_z)
-
-    axial_length = 0.30 # m
-    T = axial_length / particles[0,0]
-    t = np.linspace(0, T, num=len(B_x_t))
-
-
-
-    #plt.plot(t,B_x_t)
-    plt.plot(t,B_y_t)
-    #plt.plot(t,B_z_t)
-plt.show()
-
+if __name__ == "__main__":
+    cProfile.run("profiler()")
 
 
