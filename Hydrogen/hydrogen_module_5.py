@@ -10,41 +10,33 @@ ea0 = 2*pi* 4*pi*epsilon_0*hbar**2/(e * m_e)/(h*1e4)    # 2pi* MHz/(V/cm)
 from sympy.physics.wigner import wigner_3j,wigner_6j
 import copy
 
-def process_H(b_fields, Mx, My, Mz):
+def hamiltonian(b_fields, H0, Mx, My, Mz):
     '''
-    Produces H(t) for a full set of N atoms, given an input B(t), with T timesteps
-
-    H(t) is a N x T x 4 x 4 matrix (can be reconfigured)
-    B(t) is a N x T x 3 array
+    Produces the complete hamiltonian for each particle in the input array
     '''
+    H_array = np.zeros((*b_fields.shape[0:2], *H0.shape)).astype(complex)
 
-    H = np.zeros((b_fields.shape[0], b_fields.shape[1], 4, 4)).astype(complex)
+    for i in range(len(b_fields)):
+        H_int = magnetic_interaction(b_fields[i,:,0], Mx) + magnetic_interaction(b_fields[i,:,1], My) + magnetic_interaction(b_fields[i,:,2], Mz)
+        H_array[i,:,:,:] = (H_int + H0)
+        # TODO is there a faster way to do this
 
-    for i in range(b_fields.shape[0]):
-        H[i,:,:,:] = Hamiltonian(b_fields[i,:,:], Mx, My, Mz)
+    return H_array
 
-    return H
-
-def Hamiltonian(b_fields, Mx, My, Mz):
+def magnetic_interaction(b_field, mu):
     '''
-    Produces H(t), given an input B(t), with T timesteps
+    Produces H(t), given an input B(t) of one axis, with T timesteps
 
     H(t) is a T x 4 x 4 matrix (can be reconfigured)
-    B(t) is a T x 3 array
+    B(t) is a T x 1 array
 
-    Mx, My, Mz are 4 x 4 matrices pre-generated.
+    This needs to be done with each of the Bx, By, Bz directions.
     '''
-    H = np.zeros((b_fields.shape[0], 4, 4)).astype(complex)
+    return -np.array([mu*b for b in b_field]) # TODO is there a faster way to do this in numpy
 
-    for i in range(b_fields.shape[0]):
-        H[i,:,:] = -(b_fields[i, 0] * Mx + b_fields[i, 1] * My + b_fields[i,2] * Mz)
-    # TODO it's slow
-
-    return H
-
-def save_mu_matrices(configuration_name):
+def save_matrices(configuration_name):
     '''
-    Saves mu matrices to file for later use.
+    Saves H0 and mu matrices to file for later use.
 
     Should reconfigure whenever using different atomic values.
     '''
@@ -138,27 +130,32 @@ def save_mu_matrices(configuration_name):
     Mx = (Mminus - Mplus)/np.sqrt(2)
     My = (Mminus + Mplus)/(1j*np.sqrt(2))
 
+    np.save(f"{configuration_name}_H0.npy", H0)
     np.save(f"{configuration_name}_z.npy", Mz)
     np.save(f"{configuration_name}_x.npy", Mx)
     np.save(f"{configuration_name}_y.npy", My)
 
-def load_mu_matrices(configuration_name):
+def load_matrices(configuration_name):
     '''
-    Loads the Mx, My, Mz matrices from a configuration name
+    Loads the H0, Mx, My, Mz matrices from a configuration name
     '''
     try:
+        H0 = np.load(f"{configuration_name}_H0.npy")
         Mx = np.load(f"{configuration_name}_x.npy")
         My = np.load(f"{configuration_name}_y.npy")
         Mz = np.load(f"{configuration_name}_z.npy")
-        return (Mx, My, Mz)
+        return (H0, Mx, My, Mz)
     except:
         print(f"Matrices with configuration name {configuration_name} could not be found.")
         return None
 
-save_mu_matrices("hydrogen_matrix")
+save_matrices("hydrogen_matrix")
 
-b = np.array([[1,2,3], [4,5,6]])
+b = np.array([[[1,2,3], [4,5,6]], [[2,3,4], [5,6,7]]])
 
-H = Hamiltonian(b, *load_mu_matrices("hydrogen_matrix"))
+H0, Mx, My, Mz = load_matrices("hydrogen_matrix")
+
+H = hamiltonian(b, H0, Mx, My, Mz)
+
 
 print(H)
