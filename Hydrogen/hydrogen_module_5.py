@@ -157,5 +157,4 @@ H0, Mx, My, Mz = load_matrices("hydrogen_matrix")
 
 H = hamiltonian(b, H0, Mx, My, Mz)
 
-
 print(H)
