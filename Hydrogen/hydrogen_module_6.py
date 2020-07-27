@@ -1,8 +1,24 @@
 # Hydrogen 6
 # Hamiltonian Propagator
 
-def next_rho(p, H):
+import numpy as np
+from scipy import linalg as lg
+
+
+def rho(p0, H_array, dt):
     '''
-    Gets the next step of rho
+    Gets an array of all p(t), given an input set of Hamiltonian matrices, and a timestep dt
+
+    Works best for small dt
     '''
-    
+    p = np.zeros((H_array.shape[0], *p0.shape))
+
+    p[0,:,:] = p0
+
+    for i in range(1, H_array.shape[0]):
+        p[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * p[i-1,:,:]
+        # Based on: June 22 Notes
+
+    return p
+
+## Construct differential equations?
