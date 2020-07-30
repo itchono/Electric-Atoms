@@ -359,7 +359,7 @@ if __name__ == "__main__":
     filteredParticles = filter(particles)
     T = slowestTime(filteredParticles)
     
-    b = np.array([magnetic_fields(T, num_steps=int(1e4))])
+    b = np.array([magnetic_fields(T, omega=2*pi/T*100, num_steps=int(1e4))])
 
     H0, Mx, My, Mz = load_matrices("hydrogen_matrix")
     H = hamiltonian(b, H0, Mx, My, Mz)
@@ -370,13 +370,15 @@ if __name__ == "__main__":
 
     print(p0)
 
-    U = unitary(H[0], T/1e4) # only 
+    U = rho(p0, H[0], T/1e4) # only 
 
     p_00 = np.abs(U[:,0,0])**2
+    p_110 = np.abs(U[:,3,3])**2
 
     times = np.linspace(0, T, num=int(1e4))
 
     plt.plot(times, p_00, 'x')
+    plt.plot(times, p_110, 'x')
 
     plt.show()
 
