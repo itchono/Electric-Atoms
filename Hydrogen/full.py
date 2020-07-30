@@ -91,12 +91,10 @@ def slowestTime(particles, axial_length = 0.30):
     vx = particles[:,0]
     return axial_length / np.amin(vx[np.nonzero(vx)])
 
-def magnetic_fields(T, omega=10**6, driving_frequency = 177*10**6, num_steps = 500):
+def magnetic_fields(T, Bz0, driving_frequency = 177, num_steps = 500):
     '''
     Placeholder to Ryan's magnetic field thing.
     '''
-    Bz0 = omega # <-- omega value which is to be changed
-
     times = np.linspace(0, T, num=num_steps)
 
     b = np.zeros((num_steps, 3))
@@ -255,7 +253,9 @@ def rho(p0, H_array, dt):
     p[0,:,:] = p0
 
     for i in range(1, H_array.shape[0]):
-        p[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * p[i-1,:,:]
+
+        p[i,:,:] = np.matmul(lg.expm(-1j*H_array[i-1,:,:]*dt), p[i-1,:,:])
+
         # Based on: June 22 Notes
 
     return p
@@ -270,7 +270,8 @@ def unitary(H_array, dt):
     U[0,:,:] = np.eye(H_array.shape[1])
 
     for i in range(1, H_array.shape[0]):
-        U[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * U[i-1,:,:]
+
+        U[i,:,:] = np.matmul(lg.expm(-1j*H_array[i-1,:,:]*dt), U[i-1,:,:])
         # Based on: June 22 Notes
     return U
 
@@ -357,28 +358,33 @@ if __name__ == "__main__":
     '''
     particles = getParticles()
     filteredParticles = filter(particles)
-    T = slowestTime(filteredParticles)
+    T = slowestTime(filteredParticles) * 1e6 # convert to microseconds
     
-    b = np.array([magnetic_fields(T, omega=2*pi/T*100, num_steps=int(1e4))])
+    b = np.array([magnetic_fields(T, 50, num_steps=int(1e4))])
+    # NOTE: magnetic field strength here is NOT omega
 
     H0, Mx, My, Mz = load_matrices("hydrogen_matrix")
     H = hamiltonian(b, H0, Mx, My, Mz)
 
-    print(H[0, 0,:,:])
-
     p0 = np.diag([1,0,0,0])
-
-    print(p0)
 
     U = rho(p0, H[0], T/1e4) # only 
 
+    print(U[-1])
+
     p_00 = np.abs(U[:,0,0])**2
-    p_110 = np.abs(U[:,3,3])**2
+    p_excited_0 = np.abs(U[:,2,2])**2
 
     times = np.linspace(0, T, num=int(1e4))
 
-    plt.plot(times, p_00, 'x')
-    plt.plot(times, p_110, 'x')
+    fig, ax = plt.subplots()
+
+    ax.plot(times, p_00)
+
+    ax.plot(times, p_excited_0)
+
+    ax.set_xlabel(r"time, $t (\mu s)$")
+    ax.set_ylabel(r"probabilities, $p(t)$")
 
     plt.show()
 
