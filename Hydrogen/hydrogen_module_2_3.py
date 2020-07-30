@@ -35,7 +35,7 @@ def filter(particles, aperture_diameter = 0.5, axial_length = 30):
 
 print("Filtered Particle Arrays\n", filter(np.array([STATE, STATE2])))
     
-def positions(particles, axial_length = 30, num_steps = 500):
+def positionOverTime(particles, axial_length = 30, num_steps = 500):
     '''
     Gets the position over time functions of particles.
 
@@ -47,7 +47,7 @@ def positions(particles, axial_length = 30, num_steps = 500):
     '''
     vx, vy, vz, y0, z0  = particles.T # unpack each particle
 
-    T = axial_length / np.amin(vx) # get Time taken to traverse the x distance, on the SLOWEST particle
+    T = slowestTime(particles, axial_length)
 
     times = np.tile(np.linspace(0, T, num=num_steps), (particles.shape[0], 1)).T # make range of times, and stack them up to work on the array
 
@@ -58,4 +58,11 @@ def positions(particles, axial_length = 30, num_steps = 500):
 
     return np.transpose(np.array((x, y, z)), [2, 0, 1])
 
-print("Positions over time\n", positions(np.array([STATE, STATE2]), num_steps=4))
+def slowestTime(particles, axial_length = 30):
+    '''
+    Get Time taken to traverse the x distance, on the SLOWEST particle [timescale used by every other calculation]
+    '''
+    vx = particles[:,0]
+    return axial_length / np.amin(vx[np.nonzero(vx)])
+
+print("Positions over time\n", positionOverTime(np.array([STATE, STATE2]), num_steps=4))

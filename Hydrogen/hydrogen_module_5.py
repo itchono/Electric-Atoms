@@ -102,7 +102,7 @@ def save_matrices(configuration_name):
     # SELF NOTE: 2pi*(59.2+909.872) MHz is the distance between 2p1/2 F = 0 and 2s1/2 F = 0
 
     ground_state = AtomicState(energy=0,L=0,J=1/2,F=0)
-    excited_state = AtomicState(energy=0,L=0,J=1/2,F=1) # Remember: tau is in microseconds --> 0.13 seconds
+    excited_state = AtomicState(energy=2*pi*177,L=0,J=1/2,F=1)
 
     # FIRST STEP: define our basis
     basis = sublevel_expand([ground_state, excited_state])

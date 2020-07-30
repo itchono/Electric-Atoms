@@ -11,7 +11,7 @@ def rho(p0, H_array, dt):
 
     Works best for small dt
     '''
-    p = np.zeros((H_array.shape[0], *p0.shape))
+    p = np.zeros((H_array.shape[0], *p0.shape)).astype(complex)
 
     p[0,:,:] = p0
 
@@ -26,13 +26,13 @@ def unitary(H_array, dt):
     Constructs the unitary transformation matrix for each point in a particle's journey based on the hamiltonian
     '''
 
-    U = np.zeros((H_array.shape[0], *p0.shape))
+    U = np.zeros((H_array.shape[0], *p0.shape)).astype(complex)
 
     U[0,:,:] = np.eye(H_array.shape[1])
 
     for i in range(1, H_array.shape[0]):
         U[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * U[i-1,:,:]
         # Based on: June 22 Notes
-    return p
+    return U
 
 ## Construct differential equations?
