@@ -91,10 +91,12 @@ def slowestTime(particles, axial_length = 0.30):
     vx = particles[:,0]
     return axial_length / np.amin(vx[np.nonzero(vx)])
 
-def magnetic_fields(T, Bz0, driving_frequency = 177, num_steps = 500):
+def magnetic_fields(T, omega=10, driving_frequency = 177, num_steps = 500):
     '''
     Placeholder to Ryan's magnetic field thing.
     '''
+    Bz0 = omega # <-- omega value which is to be changed
+
     times = np.linspace(0, T, num=num_steps)
 
     b = np.zeros((num_steps, 3))
@@ -347,9 +349,7 @@ def profiler():
 
     plt.show()
     
-if __name__ == "__main__":
-    #cProfile.run("profiler()")
-
+def profiler2():
     # Requires as prerequisite code (only run once)
     '''
     NUM_POINTS= int(20000)
@@ -360,8 +360,7 @@ if __name__ == "__main__":
     filteredParticles = filter(particles)
     T = slowestTime(filteredParticles) * 1e6 # convert to microseconds
     
-    b = np.array([magnetic_fields(T, 50, num_steps=int(1e4))])
-    # NOTE: magnetic field strength here is NOT omega
+    b = np.array([magnetic_fields(T, omega=1e3*pi/T, num_steps=int(1e4))])
 
     H0, Mx, My, Mz = load_matrices("hydrogen_matrix")
     H = hamiltonian(b, H0, Mx, My, Mz)
@@ -369,8 +368,6 @@ if __name__ == "__main__":
     p0 = np.diag([1,0,0,0])
 
     U = rho(p0, H[0], T/1e4) # only 
-
-    print(U[-1])
 
     p_00 = np.abs(U[:,0,0])**2
     p_excited_0 = np.abs(U[:,2,2])**2
@@ -381,12 +378,17 @@ if __name__ == "__main__":
 
     ax.plot(times, p_00)
 
-    ax.plot(times, p_excited_0)
-
     ax.set_xlabel(r"time, $t (\mu s)$")
     ax.set_ylabel(r"probabilities, $p(t)$")
 
     plt.show()
+
+if __name__ == "__main__":
+    #cProfile.run("profiler()")
+
+    cProfile.run("profiler2()")
+
+    
 
 
 

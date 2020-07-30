@@ -16,7 +16,9 @@ def rho(p0, H_array, dt):
     p[0,:,:] = p0
 
     for i in range(1, H_array.shape[0]):
-        p[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * p[i-1,:,:]
+
+        p[i,:,:] = np.matmul(lg.expm(-1j*H_array[i-1,:,:]*dt), p[i-1,:,:])
+
         # Based on: June 22 Notes
 
     return p
@@ -31,7 +33,8 @@ def unitary(H_array, dt):
     U[0,:,:] = np.eye(H_array.shape[1])
 
     for i in range(1, H_array.shape[0]):
-        U[i,:,:] = lg.expm(-1j*H_array[i-1,:,:]*dt) * U[i-1,:,:]
+
+        U[i,:,:] = np.matmul(lg.expm(-1j*H_array[i-1,:,:]*dt), U[i-1,:,:])
         # Based on: June 22 Notes
     return U
 
