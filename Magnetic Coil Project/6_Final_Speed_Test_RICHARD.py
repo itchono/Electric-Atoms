@@ -95,10 +95,16 @@ def calculateField(coil, current, x, y, z):
 
     for start, mid, end in np.nditer([starts, mids, ends], flags=['external_loop'], order='F'):
         # use numpy fast indexing
-        fullpart = bs_integrate(start, end) # stage 1 richardson
+        # fullpart = bs_integrate(start, end) # stage 1 richardson
+        # halfpart = bs_integrate(start, mid) + bs_integrate(mid, end) # stage 2 richardson
+
+        # B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule
+
         halfpart = bs_integrate(start, mid) + bs_integrate(mid, end) # stage 2 richardson
 
-        B += 4/3 * halfpart - 1/3 * fullpart # richardson extrapolated midpoint rule
+        B += 4/3 * halfpart # richardson extrapolated midpoint rule
+
+
     
     return B * FACTOR # return SUM of all components as 3 (x,y,z) meshgrids for (Bx, By, Bz) component when evaluated using produce_target_volume
 

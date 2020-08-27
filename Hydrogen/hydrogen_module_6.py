@@ -3,6 +3,7 @@
 
 import numpy as np
 from scipy import linalg as lg
+from scipy.integrate import solve_ivp
 
 
 def rho(p0, H_array, dt):
@@ -40,18 +41,15 @@ def unitary(H_array, dt):
 
 ## Construct differential equations?
 
-def equation_system(r,t,Omega,w0,w):
-    # Need 9 DEs
+def sai(sai_0, H, times):
+    '''
+    Produces the solution for sai(t), using pure vectorized form
+    '''
 
-    # Problem: can't solve magnetic fields analytically <- uh oh
+    dt = times[1]-times[0]
 
-    rho_0011, rho_1122
-
-    rho_00, rho_10_r, rho_10_i = r
-    rhodot_00 = 2*rho_10_i * Omega*cos(w*t)
-    rhodot_10_r = w0*rho_10_i
-    rhodot_10_i = -w0*rho_10_r - (2*rho_00 - 1) * Omega*cos(w*t)
-    return rhodot_00, rhodot_10_r, rhodot_10_i
+    def equation_system(t, r):
+        return np.matmul(H[t/dt,:,:], r)
 
 
-solution = odeint(equation_system,r_init,t,args=(Omega,w,w0))
+    solution = solve_ivp(equation_system, times, sai_0)
